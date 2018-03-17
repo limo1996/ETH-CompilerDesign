@@ -8,10 +8,10 @@ grammar Javali; // parser grammar, parses streams of tokens
 // PARSER RULES 
 
 // types
-primitiveType : 'boolean' | 'int';
-
-type :	 		primitiveType | referenceType;
-				
+primitiveType : 'boolean' | 'int'										#primType							
+				;
+type :	 		primitiveType | referenceType							
+				;
 referenceType : Ident | arrayType;
 
 arrayType :	 	Ident '[' ']'  
@@ -32,12 +32,12 @@ methodDecl : 	(type | 'void') Ident '(' formalParamList? ')'
 formalParamList : type Ident (',' type Ident)* ;
 
 // statements
-stmt : 			  assignmentStmt 
-				| methodCallStmt 
-				| ifStmt 
-				| whileStmt 
-				| returnStmt 
-				| writeStmt
+stmt : 			  assignmentStmt 										#stmtAssign
+				| methodCallStmt 										#stmtMetCall
+				| ifStmt 												#stmtIf
+				| whileStmt 												#stmtWhile
+				| returnStmt 											#stmtReturn
+				| writeStmt												#stmtWrite
 				;
 
 stmtBlock : 		'{' stmt* '}';
@@ -46,9 +46,14 @@ methodCallStmt : Ident '(' actualParamList? ')'
 				 | identAccess '.' Ident '(' actualParamList? ')'
 				 ';' ;
 
-assignmentStmt : identAccess '=' (expr | newExpr | readExpr) ';';
+assignmentStmt :   identAccess '=' expr  ';'								#assignExpr
+				 | identAccess '=' newExpr ';'							#assignNew
+				 | identAccess '=' readExpr ';'							#assignRead
+				 ;
 
-writeStmt : 		('write' '(' expr ')' | 'writeln' '(' ')' ) ';' ;
+writeStmt : 		  'write' '(' expr ')' ';'								#write
+				| 'writeln' '(' ')' ';' 									#writeln
+				;
 
 ifStmt : 		'if' '(' expr ')' stmtBlock ('else' stmtBlock)? ;
 
@@ -64,7 +69,8 @@ newExpr  : 		'new'
 					| primitiveType '[' expr ']'
 				) ;
 
-readExpr :		'read' '(' ')';
+readExpr :		'read' '(' ')'											#read
+				;
 
 actualParamList :expr ( ',' expr )*;
 
@@ -76,17 +82,17 @@ identAccess : 	Ident
 				| 	identAccess '.' Ident '(' actualParamList? ')'
 				;
 				
-expr : 			Literal 
-				| identAccess 
-				| '(' expr ')' 
-				| ('+' | '-' | '!') expr					// Unary operators
-				| '(' referenceType ')' expr				// Cast
-				| expr ('*' | '/' | '%') expr			// Multiplicative operators
-				| expr ('+' | '-') expr					// Additive operators
-				| expr ('<' | '<=' | '>' | '>=') expr	// Comparative operators
-				| expr ('==' | '!=') expr				// Equality operators
-				| expr '&&' expr							// Logical and
-				| expr '||' expr							// Logical or
+expr : 			Literal 									#LIT
+				| identAccess 							#TERM
+				| '(' expr ')'							#BRACKETS
+				| ('+' | '-' | '!') expr					#UNARY
+				| '(' referenceType ')' expr				#CAST
+				| expr ('*' | '/' | '%') expr			#MULTI
+				| expr ('+' | '-') expr					#ADDI
+				| expr ('<' | '<=' | '>' | '>=') expr	#COMP
+				| expr ('==' | '!=') expr				#EQI
+				| expr '&&' expr							#AND
+				| expr '||' expr							#OR
 				;
 			
 // LEXER RULES

@@ -74,11 +74,47 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFormalParamList(JavaliParser.FormalParamListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#stmt}.
+	 * Visit a parse tree produced by the {@code stmtAssign}
+	 * labeled alternative in {@link JavaliParser#stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStmt(JavaliParser.StmtContext ctx);
+	T visitStmtAssign(JavaliParser.StmtAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stmtMetCall}
+	 * labeled alternative in {@link JavaliParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStmtMetCall(JavaliParser.StmtMetCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stmtIf}
+	 * labeled alternative in {@link JavaliParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStmtIf(JavaliParser.StmtIfContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stmtWhile}
+	 * labeled alternative in {@link JavaliParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStmtWhile(JavaliParser.StmtWhileContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stmtReturn}
+	 * labeled alternative in {@link JavaliParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStmtReturn(JavaliParser.StmtReturnContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code stmtWrite}
+	 * labeled alternative in {@link JavaliParser#stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStmtWrite(JavaliParser.StmtWriteContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JavaliParser#stmtBlock}.
 	 * @param ctx the parse tree
@@ -92,17 +128,40 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMethodCallStmt(JavaliParser.MethodCallStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#assignmentStmt}.
+	 * Visit a parse tree produced by the {@code assignExpr}
+	 * labeled alternative in {@link JavaliParser#assignmentStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssignmentStmt(JavaliParser.AssignmentStmtContext ctx);
+	T visitAssignExpr(JavaliParser.AssignExprContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#writeStmt}.
+	 * Visit a parse tree produced by the {@code assignNew}
+	 * labeled alternative in {@link JavaliParser#assignmentStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitWriteStmt(JavaliParser.WriteStmtContext ctx);
+	T visitAssignNew(JavaliParser.AssignNewContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code assignRead}
+	 * labeled alternative in {@link JavaliParser#assignmentStmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssignRead(JavaliParser.AssignReadContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code write}
+	 * labeled alternative in {@link JavaliParser#writeStmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWrite(JavaliParser.WriteContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code writeln}
+	 * labeled alternative in {@link JavaliParser#writeStmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWriteln(JavaliParser.WritelnContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JavaliParser#ifStmt}.
 	 * @param ctx the parse tree
@@ -128,11 +187,12 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNewExpr(JavaliParser.NewExprContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#readExpr}.
+	 * Visit a parse tree produced by the {@code read}
+	 * labeled alternative in {@link JavaliParser#readExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitReadExpr(JavaliParser.ReadExprContext ctx);
+	T visitRead(JavaliParser.ReadContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JavaliParser#actualParamList}.
 	 * @param ctx the parse tree
@@ -146,9 +206,80 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIdentAccess(JavaliParser.IdentAccessContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#expr}.
+	 * Visit a parse tree produced by the {@code CAST}
+	 * labeled alternative in {@link JavaliParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpr(JavaliParser.ExprContext ctx);
+	T visitCAST(JavaliParser.CASTContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code COMP}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCOMP(JavaliParser.COMPContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code BRACKETS}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBRACKETS(JavaliParser.BRACKETSContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code OR}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOR(JavaliParser.ORContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code LIT}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLIT(JavaliParser.LITContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ADDI}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitADDI(JavaliParser.ADDIContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code AND}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAND(JavaliParser.ANDContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code TERM}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTERM(JavaliParser.TERMContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code EQI}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEQI(JavaliParser.EQIContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code UNARY}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUNARY(JavaliParser.UNARYContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code MULTI}
+	 * labeled alternative in {@link JavaliParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMULTI(JavaliParser.MULTIContext ctx);
 }

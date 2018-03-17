@@ -4,6 +4,13 @@
 # Log file
 *.log
 
+# svn repo
+src/.svn/
+
+# .err files
+*.err
+*.javali.err
+
 # BlueJ files
 *.ctxt
 
