@@ -128,26 +128,11 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMethodCallStmt(JavaliParser.MethodCallStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code assignExpr}
-	 * labeled alternative in {@link JavaliParser#assignmentStmt}.
+	 * Visit a parse tree produced by {@link JavaliParser#assignmentStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssignExpr(JavaliParser.AssignExprContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code assignNew}
-	 * labeled alternative in {@link JavaliParser#assignmentStmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssignNew(JavaliParser.AssignNewContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code assignRead}
-	 * labeled alternative in {@link JavaliParser#assignmentStmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssignRead(JavaliParser.AssignReadContext ctx);
+	T visitAssignmentStmt(JavaliParser.AssignmentStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code write}
 	 * labeled alternative in {@link JavaliParser#writeStmt}.
@@ -181,11 +166,26 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitReturnStmt(JavaliParser.ReturnStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#newExpr}.
+	 * Visit a parse tree produced by the {@code newObj}
+	 * labeled alternative in {@link JavaliParser#newExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNewExpr(JavaliParser.NewExprContext ctx);
+	T visitNewObj(JavaliParser.NewObjContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code newIArray}
+	 * labeled alternative in {@link JavaliParser#newExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNewIArray(JavaliParser.NewIArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code newPArray}
+	 * labeled alternative in {@link JavaliParser#newExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNewPArray(JavaliParser.NewPArrayContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code read}
 	 * labeled alternative in {@link JavaliParser#readExpr}.

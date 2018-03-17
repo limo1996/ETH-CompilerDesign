@@ -46,9 +46,9 @@ methodCallStmt : Ident '(' actualParamList? ')'
 				 | identAccess '.' Ident '(' actualParamList? ')'
 				 ';' ;
 
-assignmentStmt :   identAccess '=' expr  ';'								#assignExpr
-				 | identAccess '=' newExpr ';'							#assignNew
-				 | identAccess '=' readExpr ';'							#assignRead
+assignmentStmt :   identAccess '=' expr  ';'								
+				 | identAccess '=' newExpr ';'							
+				 | identAccess '=' readExpr ';'							
 				 ;
 
 writeStmt : 		  'write' '(' expr ')' ';'								#write
@@ -63,11 +63,10 @@ returnStmt : 	'return' expr? ';' ;
 
 
 // expressions
-newExpr  : 		'new' 
-				(	Ident '(' ')' 
-					| Ident '[' expr ']' 
-					| primitiveType '[' expr ']'
-				) ;
+newExpr  : 		'new' Ident '(' ')' 										#newObj
+				| 'new' Ident '[' expr ']' 								#newIArray
+				| 'new' primitiveType '[' expr ']'						#newPArray
+				;
 
 readExpr :		'read' '(' ')'											#read
 				;
