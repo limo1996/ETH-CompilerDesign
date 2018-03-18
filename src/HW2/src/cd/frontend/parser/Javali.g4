@@ -42,9 +42,9 @@ stmt : 			  assignmentStmt 										#stmtAssign
 
 stmtBlock : 		'{' stmt* '}';
 
-methodCallStmt : Ident '(' actualParamList? ')' 
-				 | identAccess '.' Ident '(' actualParamList? ')'
-				 ';' ;
+methodCallStmt : Ident '(' actualParamList? ')'	';'						#methCall
+				 | identAccess '.' Ident '(' actualParamList? ')'	 ';'		#methIaCall
+				 ;
 
 assignmentStmt :   identAccess '=' expr  ';'								
 				 | identAccess '=' newExpr ';'							
@@ -73,25 +73,25 @@ readExpr :		'read' '(' ')'											#read
 
 actualParamList :expr ( ',' expr )*;
 
-identAccess : 	Ident 
-				| 'this' 
-				| identAccess '.' Ident 
-				| identAccess '[' expr ']' 
-				| 	Ident '(' actualParamList? ')' 
-				| 	identAccess '.' Ident '(' actualParamList? ')'
+identAccess : 	Ident 													#iaIdent
+				| 'this' 												#iaThis
+				| identAccess '.' Ident 									#iaIaIdent
+				| identAccess '[' expr ']' 								#iaArrayAccess
+				| 	Ident '(' actualParamList? ')' 						#iaMethodCall
+				| 	identAccess '.' Ident '(' actualParamList? ')'		#iaIaMethodCall
 				;
 				
-expr : 			Literal 									#LIT
-				| identAccess 							#TERM
-				| '(' expr ')'							#BRACKETS
-				| ('+' | '-' | '!') expr					#UNARY
-				| '(' referenceType ')' expr				#CAST
-				| expr ('*' | '/' | '%') expr			#MULTI
-				| expr ('+' | '-') expr					#ADDI
-				| expr ('<' | '<=' | '>' | '>=') expr	#COMP
-				| expr ('==' | '!=') expr				#EQI
-				| expr '&&' expr							#AND
-				| expr '||' expr							#OR
+expr : 			Literal 													#LIT
+				| identAccess 											#TERM
+				| '(' expr ')'											#BRACKETS
+				| ('+' | '-' | '!') expr									#UNARY
+				| '(' referenceType ')' expr								#CAST
+				| expr ('*' | '/' | '%') expr							#MULTI
+				| expr ('+' | '-') expr									#ADDI
+				| expr ('<' | '<=' | '>' | '>=') expr					#COMP
+				| expr ('==' | '!=') expr								#EQI
+				| expr '&&' expr											#AND
+				| expr '||' expr											#OR
 				;
 			
 // LEXER RULES

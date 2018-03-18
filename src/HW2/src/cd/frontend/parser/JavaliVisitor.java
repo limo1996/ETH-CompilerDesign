@@ -122,11 +122,19 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStmtBlock(JavaliParser.StmtBlockContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#methodCallStmt}.
+	 * Visit a parse tree produced by the {@code methCall}
+	 * labeled alternative in {@link JavaliParser#methodCallStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitMethodCallStmt(JavaliParser.MethodCallStmtContext ctx);
+	T visitMethCall(JavaliParser.MethCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code methIaCall}
+	 * labeled alternative in {@link JavaliParser#methodCallStmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMethIaCall(JavaliParser.MethIaCallContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JavaliParser#assignmentStmt}.
 	 * @param ctx the parse tree
@@ -200,11 +208,47 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitActualParamList(JavaliParser.ActualParamListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaliParser#identAccess}.
+	 * Visit a parse tree produced by the {@code iaIdent}
+	 * labeled alternative in {@link JavaliParser#identAccess}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIdentAccess(JavaliParser.IdentAccessContext ctx);
+	T visitIaIdent(JavaliParser.IaIdentContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code iaIaMethodCall}
+	 * labeled alternative in {@link JavaliParser#identAccess}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIaIaMethodCall(JavaliParser.IaIaMethodCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code iaMethodCall}
+	 * labeled alternative in {@link JavaliParser#identAccess}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIaMethodCall(JavaliParser.IaMethodCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code iaIaIdent}
+	 * labeled alternative in {@link JavaliParser#identAccess}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIaIaIdent(JavaliParser.IaIaIdentContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code iaArrayAccess}
+	 * labeled alternative in {@link JavaliParser#identAccess}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIaArrayAccess(JavaliParser.IaArrayAccessContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code iaThis}
+	 * labeled alternative in {@link JavaliParser#identAccess}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIaThis(JavaliParser.IaThisContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code CAST}
 	 * labeled alternative in {@link JavaliParser#expr}.

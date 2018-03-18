@@ -116,13 +116,6 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		return visitChildren(ctx); 
 	}
 	
-	/**
-	 * 
-	 */
-	@Override 
-	public List<Ast> visitStmtMetCall(JavaliParser.StmtMetCallContext ctx) { 
-		return visitChildren(ctx); 
-	}
 	
 	/**
 	 * 
@@ -209,5 +202,93 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		String typeName = ctx.primitiveType().getText();
 		Expr capacity = (Expr)ctx.expr().accept(this).get(0);
 		return Arrays.asList(new NewArray(typeName, capacity));
+	}
+	
+	/**
+	 * 
+	 *
+	@Override 
+	public List<Ast> visitIdentAccess(JavaliParser.IdentAccessContext ctx) { 
+		if(ctx.getText() == "this")
+			return Arrays.asList(new ThisRef());
+		if(ctx.Iden)
+	}*/
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitIaIdent(JavaliParser.IaIdentContext ctx) { 
+		return Arrays.asList(new Var(ctx.Ident().getText()));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitIaIaMethodCall(JavaliParser.IaIaMethodCallContext ctx) { 
+		String name = ctx.Ident().getText();
+		Expr recv = (Expr)ctx.identAccess().accept(this).get(0);
+		
+		@SuppressWarnings("unchecked")
+		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		
+		return Arrays.asList(new MethodCallExpr(recv, name, args));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitIaMethodCall(JavaliParser.IaMethodCallContext ctx) { 
+		String name = ctx.Ident().getText();
+		Expr recv = new ThisRef();
+		
+		@SuppressWarnings("unchecked")
+		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		
+		return Arrays.asList(new MethodCallExpr(recv, name, args));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitIaIaIdent(JavaliParser.IaIaIdentContext ctx) { 
+		List<Ast> ia = ctx.identAccess().accept(this);
+		ia.get(0).children().add(new Var(ctx.Ident().getText()));
+		return ia;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override public List<Ast> visitIaArrayAccess(JavaliParser.IaArrayAccessContext ctx) { 
+		Expr array = (Expr)ctx.identAccess().accept(this).get(0);
+		Expr index = (Expr)ctx.expr().accept(this).get(0);
+		return Arrays.asList(new Index(array, index));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override public List<Ast> visitIaThis(JavaliParser.IaThisContext ctx) { 
+		return Arrays.asList(new ThisRef());
+	}
+	
+	/**
+	 *
+	 */
+	@Override 
+	public List<Ast> visitMethCall(JavaliParser.MethCallContext ctx) { 
+		return visitChildren(ctx); 
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitMethIaCall(JavaliParser.MethIaCallContext ctx) { 
+		return visitChildren(ctx); 
 	}
 }
