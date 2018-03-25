@@ -10,7 +10,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import cd.frontend.parser.JavaliParser.*;
 import cd.ir.Ast.*;
-import cd.util.Pair;
 import cd.ir.Ast;
 
 public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
@@ -111,7 +110,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Creates function parameter list by visiting all expressions passed as arguments.
 	 */
 	@Override 
 	public List<Ast> visitActualParamList(JavaliParser.ActualParamListContext ctx) { 
@@ -123,7 +122,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits expression in return statement and then returns ReturnStmt object with
+	 * expression as parameter.
 	 */
 	@Override 
 	public List<Ast> visitReturnStmt(JavaliParser.ReturnStmtContext ctx) { 
@@ -134,7 +134,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits all statements in the block and returns list of them.
 	 */
 	@Override 
 	public List<Ast> visitStmtBlock(JavaliParser.StmtBlockContext ctx) { 
@@ -148,7 +148,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits expression in if statement, then block of statements and otherwise block 
+	 * as well if provided. Returns IfElse object.
 	 */
 	@Override 
 	public List<Ast> visitIfStmt(JavaliParser.IfStmtContext ctx) { 
@@ -164,7 +165,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits expression in while loop condition and statements in body of while loop.
+	 * Returns WhileLoop object.
 	 */
 	@Override 
 	public List<Ast> visitWhileStmt(JavaliParser.WhileStmtContext ctx) { 
@@ -174,7 +176,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns BuiltInWrite object with visited expression in it.
 	 */
 	@Override 
 	public List<Ast> visitWrite(JavaliParser.WriteContext ctx) { 
@@ -182,7 +184,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 *
+	 * Returns BuiltInWriteln object.
 	 */
 	@Override 
 	public List<Ast> visitWriteln(JavaliParser.WritelnContext ctx) { 
@@ -190,7 +192,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits BuiltInRead object.
 	 */
 	@Override 
 	public List<Ast> visitRead(JavaliParser.ReadContext ctx) { 
@@ -198,7 +200,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits left and right part of assignment statements depending on assignement type
+	 * and returns Assign object.
 	 */
 	@Override 
 	public List<Ast> visitAssignmentStmt(JavaliParser.AssignmentStmtContext ctx) { 
@@ -214,7 +217,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns NewObject object with identifier passed as constructor parameter.
 	 */
 	@Override 
 	public List<Ast> visitNewObj(JavaliParser.NewObjContext ctx) { 
@@ -222,7 +225,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits capacity expression and returns NewArray object of custom type.
 	 */
 	@Override 
 	public List<Ast> visitNewIArray(JavaliParser.NewIArrayContext ctx) { 
@@ -232,7 +235,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits capacity expression and returns NewArray object of primitive type.
 	 */
 	@Override 
 	public List<Ast> visitNewPArray(JavaliParser.NewPArrayContext ctx) { 
@@ -242,10 +245,11 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits parameters of method call. Receiver is this object.
+	 * Returns MethodCallExpr wrapped in MethodCall object.
 	 */
 	@Override 
-	public List<Ast>  visitMethCall(JavaliParser.MethCallContext ctx) { 
+	public List<Ast> visitMethCall(JavaliParser.MethCallContext ctx) { 
 		String name = ctx.Ident().getText();
 		Expr recv = new ThisRef();
 		
@@ -257,7 +261,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits parameters of method call. Visits receiver.
+	 * Returns MethodCallExpr wrapped in MethodCall object.
 	 */
 	@Override 
 	public List<Ast>  visitMethIaCall(JavaliParser.MethIaCallContext ctx) { 
@@ -272,7 +277,9 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits Indent. Id could even be primitive type because of ambiguity of grammar.
+	 * Returns either BoolCons, IntCons, Var or throws ParseFailure in case of integer
+	 * is out of bounds.
 	 */
 	@Override 
 	public List<Ast> visitIaIdent(JavaliParser.IaIdentContext ctx) { 
@@ -281,7 +288,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits receiver. Visits parameters and
+	 * returns MethodCallExpr object.
 	 */
 	@Override 
 	public List<Ast> visitIaIaMethodCall(JavaliParser.IaIaMethodCallContext ctx) { 
@@ -297,7 +305,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Receiver of method call is this object. Visits parameters and
+	 * returns MethodCallExpr object.
 	 */
 	@Override 
 	public List<Ast> visitIaMethodCall(JavaliParser.IaMethodCallContext ctx) { 
@@ -315,7 +324,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns recursive Id. Visits recursively till terminal symbol found.
+	 * Returns Field object.
 	 */
 	@Override 
 	public List<Ast> visitIaIaIdent(JavaliParser.IaIaIdentContext ctx) { 
@@ -326,7 +336,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits IdentAccess and index expression and returns Index object.
 	 */
 	@Override public List<Ast> visitIaArrayAccess(JavaliParser.IaArrayAccessContext ctx) { 
 		Expr array = (Expr)ctx.identAccess().accept(this).get(0);
@@ -335,14 +345,15 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns ThisRef object.
 	 */
 	@Override public List<Ast> visitIaThis(JavaliParser.IaThisContext ctx) { 
 		return Arrays.asList(new ThisRef());
 	}
 	
 	/**
-	 * 
+	 * Visits Literal. Returns either BoolCons, IntCons,
+	 * or throws ParseFailure in case of integer is out of bounds.
 	 */
 	@Override 
 	public List<Ast> visitLIT(JavaliParser.LITContext ctx) { 
@@ -350,6 +361,11 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		return parseIdent(literal, ctx.start.getLine());
 	}
 	
+	/**
+	 * Because of grammar ambiguity multiple rules can match literal and id.
+	 * Method that finds out which of these it is. Creates appropriate object
+	 * and checks for integer bounds.
+	 */
 	private List<Ast> parseIdent(String ident, int line){
 		Ast id;
 		switch(ident) {
@@ -378,6 +394,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		return Arrays.asList(id);	
 	}
 	
+	// checks if given string is a number no matter the size.
 	private boolean isNumeric(String str)
 	{
 		if(str.startsWith("+") || str.startsWith("-"))
@@ -391,7 +408,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns binary operator of + of -.
 	 */
 	@Override 
 	public List<Ast> visitADDI(JavaliParser.ADDIContext ctx) { 
@@ -410,7 +427,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns logical and.
 	 */
 	@Override 
 	public List<Ast> visitAND(JavaliParser.ANDContext ctx) { 
@@ -422,7 +439,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits id access in expression.
 	 */
 	@Override 
 	public List<Ast> visitTERM(JavaliParser.TERMContext ctx) { 
@@ -430,7 +447,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns binary operation. Either equals or not equals.
 	 */
 	@Override 
 	public List<Ast> visitEQI(JavaliParser.EQIContext ctx) { 
@@ -449,7 +466,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns unary operation(+,-,!)
 	 */
 	@Override 
 	public List<Ast> visitUNARY(JavaliParser.UNARYContext ctx) { 
@@ -471,7 +488,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns binary operation(*,/,%)
 	 */
 	@Override 
 	public List<Ast> visitMULTI(JavaliParser.MULTIContext ctx) { 
@@ -492,7 +509,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits expression of cast and returns Cast object.
 	 */
 	@Override 
 	public List<Ast> visitCAST(JavaliParser.CASTContext ctx) { 
@@ -503,7 +520,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns binary operation of comparison(<,<=,>,>=)
 	 */
 	@Override 
 	public List<Ast> visitCOMP(JavaliParser.COMPContext ctx) { 
@@ -526,7 +543,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Visits bracket expression.
 	 */
 	@Override 
 	public List<Ast> visitBRACKETS(JavaliParser.BRACKETSContext ctx) { 
@@ -534,7 +551,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 * 
+	 * Returns logical or binary operand.
 	 */
 	@Override 
 	public List<Ast> visitOR(JavaliParser.ORContext ctx) { 
