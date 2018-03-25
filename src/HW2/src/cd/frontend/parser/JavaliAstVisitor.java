@@ -397,6 +397,9 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	// checks if given string is a number no matter the size.
 	private boolean isNumeric(String str)
 	{
+		if(str.startsWith("0x") || str.startsWith("0X"))
+			str = str.substring(2);
+			
 		if(str.startsWith("+") || str.startsWith("-"))
 			str = str.substring(1);
 		
