@@ -1,0 +1,52 @@
+class First {
+	int field1;
+	int field2;
+
+	void init() {
+		field1 = 1;
+		field2 = 3 * field1 / 2 + 4;
+	}
+
+	void println_field(){
+		write(field1);
+		writeln();
+		write(field2);
+	}
+}
+
+class Second extends First {
+	int field3;
+
+	void init(){
+		field1 = 4;
+		field2 = 3*field1 / 2 + 4;
+		field3 = field2 * 4;
+	}
+
+	void println_field(){
+		write(field1);
+		writeln();
+		write(field2);
+		writeln();
+		write(field3);
+	}
+}
+
+class Main {
+
+   	First first;
+	First second;
+  
+   	void init() { 
+   		first = new First();
+		first.init();
+		second = new Second();
+		second.init();
+	}
+  
+   	void main() {
+		init();
+		first.println_field();
+		second.println_field();
+	}
+}

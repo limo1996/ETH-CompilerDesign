@@ -1,0 +1,12 @@
+/* Very simple program testing simple assignment */
+class Main {
+	void main() {
+		int i0, i1;
+		i0 = read();
+		i1 = read();
+		i0 = i0 + 5 + 10 - 13 + 2;
+		i1 = i0 + 5;
+		write(i0); writeln();
+		write(i1); writeln();
+	}
+}

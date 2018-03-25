@@ -226,7 +226,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitNewIArray(JavaliParser.NewIArrayContext ctx) { 
-		String typeName = ctx.Ident().getText();
+		String typeName = ctx.Ident().getText() + "[]";
 		Expr capacity = (Expr)ctx.expr().accept(this).get(0);
 		return Arrays.asList(new NewArray(typeName, capacity));
 	}
@@ -236,7 +236,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitNewPArray(JavaliParser.NewPArrayContext ctx) { 
-		String typeName = ctx.primitiveType().getText();
+		String typeName = ctx.primitiveType().getText() + "[]";
 		Expr capacity = (Expr)ctx.expr().accept(this).get(0);
 		return Arrays.asList(new NewArray(typeName, capacity));
 	}
@@ -264,8 +264,9 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		String name = ctx.Ident().getText();
 		Expr recv = (Expr)ctx.identAccess().accept(this).get(0);
 		
-		@SuppressWarnings("unchecked")
-		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		List<Expr> args = new ArrayList<Expr>();
+		if(ctx.actualParamList() != null)
+			args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
 		
 		return Arrays.asList(new MethodCall(new MethodCallExpr(recv, name, args)));
 	}
@@ -275,7 +276,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitIaIdent(JavaliParser.IaIdentContext ctx) { 
-		return Arrays.asList(new Var(ctx.Ident().getText()));
+		String ident = ctx.Ident().getText();
+		return parseIdent(ident);
 	}
 	
 	/**
@@ -345,17 +347,33 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	@Override 
 	public List<Ast> visitLIT(JavaliParser.LITContext ctx) { 
 		String literal = ctx.Literal().getText();
-		Ast constant;
-		if(literal == "null")
-			constant = new NullConst();
-		else if (literal == "true")
-			constant = new BooleanConst(true);
-		else if (literal == "false")
-			constant = new BooleanConst(false);
-		else 
-			constant = new IntConst(Integer.parseInt(literal));
+		return parseIdent(literal);
+	}
+	
+	private List<Ast> parseIdent(String ident){
+		Ast id;
+		switch(ident) {
+			case "null": id = new NullConst();
+				break;
+			case "true": id = new BooleanConst(true);
+				break;
+			case "false": id = new BooleanConst(false);
+				break;
+			default:
+				try {  
+			         int parsed = Integer.parseInt(ident);  
+			         id = new IntConst(parsed);
+			      } catch (NumberFormatException e) {  
+			    	  		try {
+			    	  			int parsed = Integer.decode(ident);
+			    	  			id = new IntConst(parsed);
+			    	  		} catch(NumberFormatException ee) {
+			    	  			id = new Var(ident);
+			    	  		}
+			      } 
+		}
 		
-		return Arrays.asList(constant);	
+		return Arrays.asList(id);	
 	}
 	
 	/**

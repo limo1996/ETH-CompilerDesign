@@ -12,6 +12,9 @@ src/.svn/
 *.err
 *.javali.err
 
+# ref files
+*.ref
+
 # BlueJ files
 *.ctxt
 
