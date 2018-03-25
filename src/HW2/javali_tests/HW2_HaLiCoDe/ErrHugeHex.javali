@@ -1,0 +1,7 @@
+class Main() {
+	void main() {
+		int i0;
+		i0 = 0xBCA7A8D9F5G7;
+		return 0x76729;
+	}
+}
