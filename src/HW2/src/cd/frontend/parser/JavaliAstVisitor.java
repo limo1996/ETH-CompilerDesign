@@ -49,6 +49,8 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitMemberList(JavaliParser.MemberListContext ctx) { 
+		if(ctx.children == null)
+			return new ArrayList<Ast>();
 		return visitChildren(ctx);
 	}
 	
@@ -362,8 +364,13 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
 		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
 		BinaryOp.BOp op = BinaryOp.BOp.B_MINUS;
-		if(ctx.getText() == "+")
-			op = BinaryOp.BOp.B_PLUS;
+		String operator = ctx.getChild(1).getText();
+		switch(operator) {
+			case "+": op = BinaryOp.BOp.B_PLUS;
+				break;
+			case "-": op = BinaryOp.BOp.B_MINUS;
+				break;
+		}
 		
 		return Arrays.asList(new BinaryOp(left, op, right));
 	}
@@ -396,8 +403,13 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
 		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
 		BinaryOp.BOp op = BinaryOp.BOp.B_EQUAL;
-		if(ctx.getText() == "!=")
-			op = BinaryOp.BOp.B_NOT_EQUAL;
+		String operator = ctx.getChild(1).getText();
+		switch(operator) {
+			case "!=": op = BinaryOp.BOp.B_NOT_EQUAL;
+				break;
+			case "==": op = BinaryOp.BOp.B_EQUAL;
+				break;
+		}
 		
 		return Arrays.asList(new BinaryOp(left, op, right));
 	}
@@ -409,7 +421,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	public List<Ast> visitUNARY(JavaliParser.UNARYContext ctx) { 
 		Expr expr = (Expr)ctx.expr().accept(this).get(0);
 		UnaryOp.UOp op = UnaryOp.UOp.U_BOOL_NOT;
-		String operator = ctx.getChild(0).toString();
+		String operator = ctx.getChild(0).getText();
 		switch(operator) {
 			case "+": op = UnaryOp.UOp.U_PLUS;
 				break;
@@ -432,10 +444,15 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
 		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
 		BinaryOp.BOp op = BinaryOp.BOp.B_DIV;
-		if(ctx.getText() == "*")
-			op = BinaryOp.BOp.B_TIMES;
-		else if(ctx.getText() == "%")
-			op = BinaryOp.BOp.B_MOD;
+		String operator = ctx.getChild(1).getText();
+		switch(operator) {
+		case "*": op = BinaryOp.BOp.B_TIMES;
+			break;
+		case "%": op = BinaryOp.BOp.B_MOD;
+			break;
+		case "/": op = BinaryOp.BOp.B_DIV;
+			break;
+		}
 		
 		return Arrays.asList(new BinaryOp(left, op, right));
 	}
@@ -459,12 +476,17 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
 		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
 		BinaryOp.BOp op = BinaryOp.BOp.B_LESS_THAN;
-		if (ctx.getText() == "<=")
-			op = BinaryOp.BOp.B_LESS_OR_EQUAL;
-		else if (ctx.getText() == ">=")
-			op = BinaryOp.BOp.B_GREATER_OR_EQUAL;
-		else if (ctx.getText() == ">")
-			op = BinaryOp.BOp.B_GREATER_THAN;
+		String operator = ctx.getChild(1).toString();
+		switch(operator) {
+			case "<=": op = BinaryOp.BOp.B_LESS_OR_EQUAL;
+				break;
+			case ">=": op = BinaryOp.BOp.B_GREATER_OR_EQUAL;
+				break;
+			case ">": op = BinaryOp.BOp.B_GREATER_THAN;
+				break;
+			case "<": op = BinaryOp.BOp.B_LESS_THAN;
+				break;
+		}
 		
 		return Arrays.asList(new BinaryOp(left, op, right));
 	}
