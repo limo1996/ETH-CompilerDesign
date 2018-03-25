@@ -1,0 +1,6 @@
+class Main {
+    void main() {
+        // We should throw parse failure exception if int is not in [−2147483647, 2147483647]
+        int i0 = -2147483648;
+    }
+}

@@ -277,7 +277,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	@Override 
 	public List<Ast> visitIaIdent(JavaliParser.IaIdentContext ctx) { 
 		String ident = ctx.Ident().getText();
-		return parseIdent(ident);
+		return parseIdent(ident, ctx.start.getLine());
 	}
 	
 	/**
@@ -347,10 +347,10 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	@Override 
 	public List<Ast> visitLIT(JavaliParser.LITContext ctx) { 
 		String literal = ctx.Literal().getText();
-		return parseIdent(literal);
+		return parseIdent(literal, ctx.start.getLine());
 	}
 	
-	private List<Ast> parseIdent(String ident){
+	private List<Ast> parseIdent(String ident, int line){
 		Ast id;
 		switch(ident) {
 			case "null": id = new NullConst();
@@ -361,19 +361,33 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 				break;
 			default:
 				try {  
-			         int parsed = Integer.parseInt(ident);  
+			         int parsed;
+			         if(ident.startsWith("0x") || ident.startsWith("0X"))	
+			        	 	parsed = Integer.parseInt(ident.substring(2), 16);
+			         else
+			        	 	parsed = Integer.parseInt(ident);
 			         id = new IntConst(parsed);
-			      } catch (NumberFormatException e) {  
-			    	  		try {
-			    	  			int parsed = Integer.decode(ident);
-			    	  			id = new IntConst(parsed);
-			    	  		} catch(NumberFormatException ee) {
-			    	  			id = new Var(ident);
+			      } catch (NumberFormatException e) { 
+			    	  		if(isNumeric(ident)) {
+			    	  			throw new ParseFailure(line, "Integer out of bounds");
 			    	  		}
+			    	  	 id = new Var(ident);
 			      } 
 		}
 		
 		return Arrays.asList(id);	
+	}
+	
+	private boolean isNumeric(String str)
+	{
+		if(str.startsWith("+") || str.startsWith("-"))
+			str = str.substring(1);
+		
+	    for (char c : str.toCharArray())
+	    {
+	        if (!Character.isDigit(c)) return false;
+	    }
+	    return true;
 	}
 	
 	/**
