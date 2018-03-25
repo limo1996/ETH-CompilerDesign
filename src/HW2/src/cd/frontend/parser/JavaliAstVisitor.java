@@ -85,7 +85,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 			assert(typeSize == fplc.Ident().size());
 			for(int i = 0; i < typeSize; i++) {
 				paramTypes.add(fplc.type(i).getText());
-				paramNames.add(fplc.type(i).getText());
+				paramNames.add(fplc.Ident(i).getText());
 			}
 		}
 		
@@ -249,10 +249,11 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		String name = ctx.Ident().getText();
 		Expr recv = new ThisRef();
 		
-		@SuppressWarnings("unchecked")
-		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		List<Expr> args = new ArrayList<Expr>();
+		if(ctx.actualParamList() != null)
+			args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
 		
-		return Arrays.asList(new MethodCallExpr(recv, name, args));
+		return Arrays.asList(new MethodCall(new MethodCallExpr(recv, name, args)));
 	}
 	
 	/**
@@ -266,7 +267,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		@SuppressWarnings("unchecked")
 		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
 		
-		return Arrays.asList(new MethodCallExpr(recv, name, args));
+		return Arrays.asList(new MethodCall(new MethodCallExpr(recv, name, args)));
 	}
 	
 	/**
@@ -316,9 +317,10 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitIaIaIdent(JavaliParser.IaIaIdentContext ctx) { 
-		List<Ast> ia = ctx.identAccess().accept(this);
-		ia.get(0).children().add(new Var(ctx.Ident().getText()));
-		return ia;
+		Expr arg = (Expr)ctx.identAccess().accept(this).get(0);
+		String name = ctx.Ident().getText();
+		Field f = new Field(arg, name);
+		return Arrays.asList(f);
 	}
 	
 	/**
@@ -392,7 +394,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitTERM(JavaliParser.TERMContext ctx) { 
-		return visitChildren(ctx); 
+		return ctx.identAccess().accept(this);
 	}
 	
 	/**
@@ -496,7 +498,7 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 */
 	@Override 
 	public List<Ast> visitBRACKETS(JavaliParser.BRACKETSContext ctx) { 
-		return visitChildren(ctx); 
+		return ctx.expr().accept(this);
 	}
 	
 	/**
