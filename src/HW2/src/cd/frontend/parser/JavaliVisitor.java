@@ -74,47 +74,11 @@ public interface JavaliVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFormalParamList(JavaliParser.FormalParamListContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code stmtAssign}
-	 * labeled alternative in {@link JavaliParser#stmt}.
+	 * Visit a parse tree produced by {@link JavaliParser#stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStmtAssign(JavaliParser.StmtAssignContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code stmtMetCall}
-	 * labeled alternative in {@link JavaliParser#stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStmtMetCall(JavaliParser.StmtMetCallContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code stmtIf}
-	 * labeled alternative in {@link JavaliParser#stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStmtIf(JavaliParser.StmtIfContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code stmtWhile}
-	 * labeled alternative in {@link JavaliParser#stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStmtWhile(JavaliParser.StmtWhileContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code stmtReturn}
-	 * labeled alternative in {@link JavaliParser#stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStmtReturn(JavaliParser.StmtReturnContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code stmtWrite}
-	 * labeled alternative in {@link JavaliParser#stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStmtWrite(JavaliParser.StmtWriteContext ctx);
+	T visitStmt(JavaliParser.StmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JavaliParser#stmtBlock}.
 	 * @param ctx the parse tree

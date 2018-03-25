@@ -743,79 +743,31 @@ public class JavaliParser extends Parser {
 	}
 
 	public static class StmtContext extends ParserRuleContext {
+		public AssignmentStmtContext assignmentStmt() {
+			return getRuleContext(AssignmentStmtContext.class,0);
+		}
+		public MethodCallStmtContext methodCallStmt() {
+			return getRuleContext(MethodCallStmtContext.class,0);
+		}
+		public IfStmtContext ifStmt() {
+			return getRuleContext(IfStmtContext.class,0);
+		}
+		public WhileStmtContext whileStmt() {
+			return getRuleContext(WhileStmtContext.class,0);
+		}
+		public ReturnStmtContext returnStmt() {
+			return getRuleContext(ReturnStmtContext.class,0);
+		}
+		public WriteStmtContext writeStmt() {
+			return getRuleContext(WriteStmtContext.class,0);
+		}
 		public StmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_stmt; }
-	 
-		public StmtContext() { }
-		public void copyFrom(StmtContext ctx) {
-			super.copyFrom(ctx);
-		}
-	}
-	public static class StmtWhileContext extends StmtContext {
-		public WhileStmtContext whileStmt() {
-			return getRuleContext(WhileStmtContext.class,0);
-		}
-		public StmtWhileContext(StmtContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmtWhile(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StmtIfContext extends StmtContext {
-		public IfStmtContext ifStmt() {
-			return getRuleContext(IfStmtContext.class,0);
-		}
-		public StmtIfContext(StmtContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmtIf(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StmtMetCallContext extends StmtContext {
-		public MethodCallStmtContext methodCallStmt() {
-			return getRuleContext(MethodCallStmtContext.class,0);
-		}
-		public StmtMetCallContext(StmtContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmtMetCall(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StmtWriteContext extends StmtContext {
-		public WriteStmtContext writeStmt() {
-			return getRuleContext(WriteStmtContext.class,0);
-		}
-		public StmtWriteContext(StmtContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmtWrite(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StmtReturnContext extends StmtContext {
-		public ReturnStmtContext returnStmt() {
-			return getRuleContext(ReturnStmtContext.class,0);
-		}
-		public StmtReturnContext(StmtContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmtReturn(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StmtAssignContext extends StmtContext {
-		public AssignmentStmtContext assignmentStmt() {
-			return getRuleContext(AssignmentStmtContext.class,0);
-		}
-		public StmtAssignContext(StmtContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmtAssign(this);
+			if ( visitor instanceof JavaliVisitor ) return ((JavaliVisitor<? extends T>)visitor).visitStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -828,7 +780,6 @@ public class JavaliParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,13,_ctx) ) {
 			case 1:
-				_localctx = new StmtAssignContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(136);
@@ -836,7 +787,6 @@ public class JavaliParser extends Parser {
 				}
 				break;
 			case 2:
-				_localctx = new StmtMetCallContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(137);
@@ -844,7 +794,6 @@ public class JavaliParser extends Parser {
 				}
 				break;
 			case 3:
-				_localctx = new StmtIfContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(138);
@@ -852,7 +801,6 @@ public class JavaliParser extends Parser {
 				}
 				break;
 			case 4:
-				_localctx = new StmtWhileContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(139);
@@ -860,7 +808,6 @@ public class JavaliParser extends Parser {
 				}
 				break;
 			case 5:
-				_localctx = new StmtReturnContext(_localctx);
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(140);
@@ -868,7 +815,6 @@ public class JavaliParser extends Parser {
 				}
 				break;
 			case 6:
-				_localctx = new StmtWriteContext(_localctx);
 				enterOuterAlt(_localctx, 6);
 				{
 				setState(141);

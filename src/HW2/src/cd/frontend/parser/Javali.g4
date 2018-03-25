@@ -8,7 +8,7 @@ grammar Javali; // parser grammar, parses streams of tokens
 // PARSER RULES 
 
 // types
-primitiveType : 'boolean' | 'int'										#primType							
+primitiveType : 'boolean' | 'int'																	
 				;
 type :	 		primitiveType | referenceType							
 				;
@@ -32,12 +32,12 @@ methodDecl : 	(type | 'void') Ident '(' formalParamList? ')'
 formalParamList : type Ident (',' type Ident)* ;
 
 // statements
-stmt : 			  assignmentStmt 										#stmtAssign
-				| methodCallStmt 										#stmtMetCall
-				| ifStmt 												#stmtIf
-				| whileStmt 												#stmtWhile
-				| returnStmt 											#stmtReturn
-				| writeStmt												#stmtWrite
+stmt : 			  assignmentStmt 										
+				| methodCallStmt 										
+				| ifStmt 												
+				| whileStmt 												
+				| returnStmt 											
+				| writeStmt												
 				;
 
 stmtBlock : 		'{' stmt* '}';

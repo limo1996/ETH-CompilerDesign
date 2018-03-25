@@ -112,25 +112,12 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 * 
 	 */
 	@Override 
-	public List<Ast> visitStmtAssign(JavaliParser.StmtAssignContext ctx) { 
-		return visitChildren(ctx); 
-	}
-	
-	
-	/**
-	 * 
-	 */
-	@Override 
-	public List<Ast> visitStmtIf(JavaliParser.StmtIfContext ctx) { 
-		return visitChildren(ctx); 
-	}
-	
-	/**
-	 * 
-	 */
-	@Override 
-	public List<Ast> visitStmtWhile(JavaliParser.StmtWhileContext ctx) { 
-		return visitChildren(ctx); 
+	public List<Ast> visitActualParamList(JavaliParser.ActualParamListContext ctx) { 
+		List<Ast> exprs = new ArrayList<Ast>();
+		for(JavaliParser.ExprContext ectx : ctx.expr()) {
+			exprs.addAll(ectx.accept(this));
+		}
+		return exprs;
 	}
 	
 	/**
@@ -140,8 +127,48 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	public List<Ast> visitReturnStmt(JavaliParser.ReturnStmtContext ctx) { 
 		Expr expr = null;
 		if(ctx.expr() != null)
-			expr = (Expr)ctx.expr().accept(this);
+			expr = (Expr)ctx.expr().accept(this).get(0);
 		return Arrays.asList(new ReturnStmt(expr));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitStmtBlock(JavaliParser.StmtBlockContext ctx) { 
+		List<Ast> block = new ArrayList<Ast>();
+		
+		for (JavaliParser.StmtContext stmt : ctx.stmt()) {
+            block.addAll(stmt.accept(this));
+        }
+
+        return block;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitIfStmt(JavaliParser.IfStmtContext ctx) { 
+		Expr cond = (Expr)ctx.expr().accept(this).get(0);
+		Ast then = new Seq(ctx.stmtBlock(0).accept(this));
+		Ast otherwise = new Nop();
+		
+		if(ctx.stmtBlock().size() == 2) {
+			otherwise = new Seq(ctx.stmtBlock(1).accept(this));
+		}
+		
+		return Arrays.asList(new IfElse(cond, then, otherwise));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitWhileStmt(JavaliParser.WhileStmtContext ctx) { 
+		Expr cond = (Expr)ctx.expr().accept(this).get(0);
+		Ast body = new Seq(ctx.stmtBlock().accept(this));
+		return Arrays.asList(new WhileLoop(cond, body));
 	}
 	
 	/**
@@ -158,6 +185,14 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	@Override 
 	public List<Ast> visitWriteln(JavaliParser.WritelnContext ctx) { 
 		return Arrays.asList(new BuiltInWriteln());
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitRead(JavaliParser.ReadContext ctx) { 
+		return Arrays.asList(new BuiltInRead());
 	}
 	
 	/**
@@ -206,13 +241,31 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	
 	/**
 	 * 
-	 *
+	 */
 	@Override 
-	public List<Ast> visitIdentAccess(JavaliParser.IdentAccessContext ctx) { 
-		if(ctx.getText() == "this")
-			return Arrays.asList(new ThisRef());
-		if(ctx.Iden)
-	}*/
+	public List<Ast>  visitMethCall(JavaliParser.MethCallContext ctx) { 
+		String name = ctx.Ident().getText();
+		Expr recv = new ThisRef();
+		
+		@SuppressWarnings("unchecked")
+		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		
+		return Arrays.asList(new MethodCallExpr(recv, name, args));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast>  visitMethIaCall(JavaliParser.MethIaCallContext ctx) { 
+		String name = ctx.Ident().getText();
+		Expr recv = (Expr)ctx.identAccess().accept(this).get(0);
+		
+		@SuppressWarnings("unchecked")
+		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		
+		return Arrays.asList(new MethodCallExpr(recv, name, args));
+	}
 	
 	/**
 	 * 
@@ -230,8 +283,10 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		String name = ctx.Ident().getText();
 		Expr recv = (Expr)ctx.identAccess().accept(this).get(0);
 		
-		@SuppressWarnings("unchecked")
-		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		List<Expr> args = new ArrayList<Expr>();
+		
+		if(ctx.actualParamList() != null)
+			args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
 		
 		return Arrays.asList(new MethodCallExpr(recv, name, args));
 	}
@@ -244,8 +299,12 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 		String name = ctx.Ident().getText();
 		Expr recv = new ThisRef();
 		
-		@SuppressWarnings("unchecked")
-		List<Expr> args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		List<Expr> args = new ArrayList<Expr>();
+		
+		if(ctx.actualParamList() != null) {
+			//@SuppressWarnings("unchecked")
+			args = (List<Expr>)(List<?>)ctx.actualParamList().accept(this);
+		}
 		
 		return Arrays.asList(new MethodCallExpr(recv, name, args));
 	}
@@ -277,10 +336,55 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	}
 	
 	/**
-	 *
+	 * 
 	 */
 	@Override 
-	public List<Ast> visitMethCall(JavaliParser.MethCallContext ctx) { 
+	public List<Ast> visitLIT(JavaliParser.LITContext ctx) { 
+		String literal = ctx.Literal().getText();
+		Ast constant;
+		if(literal == "null")
+			constant = new NullConst();
+		else if (literal == "true")
+			constant = new BooleanConst(true);
+		else if (literal == "false")
+			constant = new BooleanConst(false);
+		else 
+			constant = new IntConst(Integer.parseInt(literal));
+		
+		return Arrays.asList(constant);	
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitADDI(JavaliParser.ADDIContext ctx) { 
+		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
+		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
+		BinaryOp.BOp op = BinaryOp.BOp.B_MINUS;
+		if(ctx.getText() == "+")
+			op = BinaryOp.BOp.B_PLUS;
+		
+		return Arrays.asList(new BinaryOp(left, op, right));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitAND(JavaliParser.ANDContext ctx) { 
+		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
+		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
+		BinaryOp.BOp op = BinaryOp.BOp.B_AND;
+		
+		return Arrays.asList(new BinaryOp(left, op, right));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitTERM(JavaliParser.TERMContext ctx) { 
 		return visitChildren(ctx); 
 	}
 	
@@ -288,7 +392,100 @@ public final class JavaliAstVisitor extends JavaliBaseVisitor<List<Ast>> {
 	 * 
 	 */
 	@Override 
-	public List<Ast> visitMethIaCall(JavaliParser.MethIaCallContext ctx) { 
+	public List<Ast> visitEQI(JavaliParser.EQIContext ctx) { 
+		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
+		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
+		BinaryOp.BOp op = BinaryOp.BOp.B_EQUAL;
+		if(ctx.getText() == "!=")
+			op = BinaryOp.BOp.B_NOT_EQUAL;
+		
+		return Arrays.asList(new BinaryOp(left, op, right));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitUNARY(JavaliParser.UNARYContext ctx) { 
+		Expr expr = (Expr)ctx.expr().accept(this).get(0);
+		UnaryOp.UOp op = UnaryOp.UOp.U_BOOL_NOT;
+		String operator = ctx.getChild(0).toString();
+		switch(operator) {
+			case "+": op = UnaryOp.UOp.U_PLUS;
+				break;
+			case "-": op = UnaryOp.UOp.U_MINUS;
+				break;
+			case "!": op = UnaryOp.UOp.U_BOOL_NOT;
+				break;
+			default: 
+				System.out.println(operator + " not matched!");
+		}
+		
+		return Arrays.asList(new UnaryOp(op, expr));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitMULTI(JavaliParser.MULTIContext ctx) { 
+		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
+		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
+		BinaryOp.BOp op = BinaryOp.BOp.B_DIV;
+		if(ctx.getText() == "*")
+			op = BinaryOp.BOp.B_TIMES;
+		else if(ctx.getText() == "%")
+			op = BinaryOp.BOp.B_MOD;
+		
+		return Arrays.asList(new BinaryOp(left, op, right));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitCAST(JavaliParser.CASTContext ctx) { 
+		Expr expr = (Expr)ctx.expr().accept(this).get(0);
+		String referenceType = ctx.referenceType().getText();
+		
+		return Arrays.asList(new Cast(expr, referenceType));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitCOMP(JavaliParser.COMPContext ctx) { 
+		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
+		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
+		BinaryOp.BOp op = BinaryOp.BOp.B_LESS_THAN;
+		if (ctx.getText() == "<=")
+			op = BinaryOp.BOp.B_LESS_OR_EQUAL;
+		else if (ctx.getText() == ">=")
+			op = BinaryOp.BOp.B_GREATER_OR_EQUAL;
+		else if (ctx.getText() == ">")
+			op = BinaryOp.BOp.B_GREATER_THAN;
+		
+		return Arrays.asList(new BinaryOp(left, op, right));
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitBRACKETS(JavaliParser.BRACKETSContext ctx) { 
 		return visitChildren(ctx); 
+	}
+	
+	/**
+	 * 
+	 */
+	@Override 
+	public List<Ast> visitOR(JavaliParser.ORContext ctx) { 
+		Expr left = (Expr)ctx.expr(0).accept(this).get(0);
+		Expr right = (Expr)ctx.expr(1).accept(this).get(0);
+		BinaryOp.BOp op = BinaryOp.BOp.B_OR;
+		
+		return Arrays.asList(new BinaryOp(left, op, right));
 	}
 }
