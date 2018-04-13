@@ -1,5 +1,8 @@
 package cd.frontend.semantic;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cd.ir.*;
 import cd.ir.Symbol.*;
 import cd.ir.Ast.*;
@@ -19,13 +22,16 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 			 MethodSymbol ms =  (MethodSymbol)md.accept(this, VariableSymbol.Kind.PARAM);
 			 ast.sym.methods.put(ms.name, ms);
 		}
+		
 		for(VarDecl vd : ast.childrenOfType(VarDecl.class)) {
 			VariableSymbol vs = (VariableSymbol)vd.accept(this, VariableSymbol.Kind.FIELD);
 			ast.sym.fields.put(vs.name, vs);
 		}
+		
 		if(ast.superClass != null && ast.superClass != "") {
 			ast.sym.superClass = this.analyzer.getClassSymbol(ast.superClass);
-		}
+		}	
+		
 		return ast.sym;
 	}
 	
@@ -37,8 +43,8 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 		MethodSymbol ms = new MethodSymbol(ast);
 		
 		for(int i = 0; i < ast.argumentNames.size(); i++) {
-			ms.parameters.add(this.getType(ast.argumentTypes.get(i),
-					ast.argumentNames.get(i), VariableSymbol.Kind.PARAM));
+			ms.parameters.add(this.getType(ast.argumentNames.get(i),
+					ast.argumentTypes.get(i), VariableSymbol.Kind.PARAM));
 		}
 		
 		for(VarDecl vd : ast.decls().childrenOfType(VarDecl.class)) {
@@ -46,16 +52,13 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 			ms.locals.put(vs.name, vs);
 		}
 		
-		if(ast.name.equals("main") && ast.argumentNames.size() == 0 && ast.returnType.equals("void"))
-			this.analyzer.start_point_defined = true;
-
 		ms.returnType = this.getTypeSymbol(ast.returnType);
 		ast.sym = ms;
 		return ms;
 	}
 	
 	// creates variable symbol from arguments
-	private VariableSymbol getType(String type, String name, VariableSymbol.Kind kind) {
+	private VariableSymbol getType(String name, String type, VariableSymbol.Kind kind) {
 		return new VariableSymbol(name, this.getTypeSymbol(type), kind);
 	}
 	
@@ -63,6 +66,7 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 	private TypeSymbol getTypeSymbol(String type) {
 		TypeSymbol ts;
 		boolean is_array = false;
+		
 		if(type.endsWith("[]")) {
 			type = type.substring(0, type.indexOf("[]"));
 			is_array = true;
@@ -84,7 +88,7 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 	 * Returns VariableSymbol with kind passed as parameter and name, type taken from ast node.
 	 */
 	public Symbol varDecl(VarDecl ast, VariableSymbol.Kind arg) {
-		VariableSymbol vs = getType(ast.type, ast.name, arg);
+		VariableSymbol vs = getType(ast.name, ast.type, arg);
 		ast.sym = vs;
 		return vs;
 	}

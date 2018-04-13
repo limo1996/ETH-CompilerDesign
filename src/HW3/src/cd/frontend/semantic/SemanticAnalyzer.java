@@ -7,17 +7,17 @@ import java.util.Map;
 import cd.Main;
 import cd.ir.Ast.ClassDecl;
 import cd.ir.Symbol.ClassSymbol;
+import cd.ir.Symbol.MethodSymbol;
+import cd.ir.Symbol.PrimitiveTypeSymbol;
 
 public class SemanticAnalyzer {
 	
 	public final Main main;
 	public Map<String, ClassDecl> classDeclarations;
-	public boolean start_point_defined;
 	
 	public SemanticAnalyzer(Main main) {
 		this.main = main;
 		classDeclarations = new HashMap<String, ClassDecl>();
-		start_point_defined = false;
 	}
 	
 	/**
@@ -38,6 +38,11 @@ public class SemanticAnalyzer {
 	
 	public void check(List<ClassDecl> classDecls) throws SemanticFailure {
 		for(ClassDecl cd : classDecls) {
+			
+			// check for double type declaration
+			if(classDeclarations.containsKey(cd.name))
+				throw new SemanticFailure(SemanticFailure.Cause.DOUBLE_DECLARATION);
+			
 			cd.sym = new ClassSymbol(cd);
 			classDeclarations.put(cd.name, cd);
 		}
@@ -46,8 +51,26 @@ public class SemanticAnalyzer {
 		for(ClassDecl cd : classDecls) {
 			visitor.classDecl(cd, null);
 		}
-		if(!start_point_defined)
+		
+		// check for starting point
+		// check for 'Main' class
+		if(!classDeclarations.containsKey("Main"))
 			throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
+		else {
+			
+			ClassSymbol mc = classDeclarations.get("Main").sym;
+			
+			// check for 'main' method (in class 'Main')
+			if(!mc.methods.containsKey("main"))
+				throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
+			else {
+				
+				MethodSymbol mm = mc.methods.get("main");
+				
+				// check for the right signature 'void main()'
+				if(!mm.parameters.isEmpty() || !mm.returnType.name.equals("void"))
+					throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
+			}
+		}
 	}
-
 }
