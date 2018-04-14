@@ -43,8 +43,9 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 		MethodSymbol ms = new MethodSymbol(ast);
 		
 		for(int i = 0; i < ast.argumentNames.size(); i++) {
-			ms.parameters.add(this.getType(ast.argumentNames.get(i),
-					ast.argumentTypes.get(i), VariableSymbol.Kind.PARAM));
+			/*ms.parameters.add(this.getType(ast.argumentNames.get(i),
+					ast.argumentTypes.get(i), VariableSymbol.Kind.PARAM));*/
+			ms.parameters.add(new VariableSymbol(ast.argumentNames.get(i),getTypeSymbol(ast.argumentTypes.get(i)),VariableSymbol.Kind.PARAM));
 		}
 		
 		for(VarDecl vd : ast.decls().childrenOfType(VarDecl.class)) {
@@ -58,9 +59,9 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 	}
 	
 	// creates variable symbol from arguments
-	private VariableSymbol getType(String name, String type, VariableSymbol.Kind kind) {
+	/*private VariableSymbol getType(String name, String type, VariableSymbol.Kind kind) {
 		return new VariableSymbol(name, this.getTypeSymbol(type), kind);
-	}
+	}*/
 	
 	// parses type symbol out of string
 	private TypeSymbol getTypeSymbol(String type) {
@@ -72,10 +73,21 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 			is_array = true;
 		}
 		
-		if(type.equals("void") || type.equals("boolean") || type.equals("int"))
+		/*if(type.equals("void") || type.equals("boolean") || type.equals("int"))
 			ts = new PrimitiveTypeSymbol(type);
 		else 
-			ts = this.analyzer.getClassSymbol(type);
+			ts = this.analyzer.getClassSymbol(type);*/
+		
+		switch (type) {
+			case "void": ts = Symbol.PrimitiveTypeSymbol.voidType;
+				break;
+			case "boolean": ts = Symbol.PrimitiveTypeSymbol.booleanType;
+				break;
+			case "int": ts = Symbol.PrimitiveTypeSymbol.intType;
+				break;
+			default: ts = this.analyzer.getClassSymbol(type);
+				break;
+		}
 		
 		if(is_array)
 			ts = new ArrayTypeSymbol(ts);
@@ -88,7 +100,8 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 	 * Returns VariableSymbol with kind passed as parameter and name, type taken from ast node.
 	 */
 	public Symbol varDecl(VarDecl ast, VariableSymbol.Kind arg) {
-		VariableSymbol vs = getType(ast.name, ast.type, arg);
+		//VariableSymbol vs = getType(ast.name, ast.type, arg);
+		VariableSymbol vs = new VariableSymbol(ast.name, this.getTypeSymbol(ast.type), arg);
 		ast.sym = vs;
 		return vs;
 	}

@@ -1,0 +1,12 @@
+// Test DOUBLE_DECLARATION failure.
+
+class Main {
+	void main() {
+	}
+}
+
+class someclass {
+	int field;
+	
+	bool field;
+}

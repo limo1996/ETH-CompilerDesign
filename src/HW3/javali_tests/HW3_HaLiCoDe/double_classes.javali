@@ -1,0 +1,18 @@
+// Test DOUBLE_DECLARATION failure.
+
+class Main {
+	void main() {
+	}
+}
+
+class badclass {
+	int field;
+}
+
+class badclass {
+	bool field;
+	
+	int smth() {
+		return 2;
+	}
+}

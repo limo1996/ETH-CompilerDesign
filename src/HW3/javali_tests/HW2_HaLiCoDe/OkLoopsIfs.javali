@@ -1,0 +1,25 @@
+/* In this test we are going to test while loops */
+
+class Main {
+	int MAX;
+	void main(){
+		this.MAX = 10;
+		int i, i2;
+		i = 0;
+		while(i < MAX){
+			if(i%2 == 0){
+				println(i);
+			}
+			i2 = 0;	
+			while(i2 < i){
+				println(i2);
+				i2 = i2 + 1;
+			}
+			i = i + 1;
+		}
+		if(this.MAX % 2 == 1){
+			println(1000 * i2 - i * 30 / 7);
+		}
+	}
+}
+		

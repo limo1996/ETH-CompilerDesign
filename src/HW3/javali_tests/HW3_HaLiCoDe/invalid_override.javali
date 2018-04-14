@@ -1,0 +1,24 @@
+// Test INVALID_OVERRIDE failure.
+
+class Main {
+	void main() {
+	
+	}
+}
+
+class testclass{
+	int testfield1;
+	boolean testfield2;
+	testclass testfield3;
+	
+	int testmethod(boolean testarg) {
+		return 1;
+	}
+}
+
+class testclass2 extends testclass {
+	
+	boolean testmethod(int testarg){
+		return true;
+	}
+}

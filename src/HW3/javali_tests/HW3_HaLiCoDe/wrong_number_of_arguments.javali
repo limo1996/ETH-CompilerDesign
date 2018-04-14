@@ -1,0 +1,12 @@
+class Main {
+
+	int testmethod1() {
+		return 1;
+	}
+	
+	void main() {
+		int variable;
+		
+		variable = testmethod1(1);
+	}
+}

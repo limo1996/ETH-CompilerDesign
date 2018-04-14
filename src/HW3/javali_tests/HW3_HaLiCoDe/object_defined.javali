@@ -1,0 +1,17 @@
+// Test OBJECT_CLASS_DEFINED failure.
+
+class Main {
+	void main() {
+	
+	}
+}
+
+class Object{
+	int testfield1;
+	boolean testfield2;
+	Main testfield3;
+	
+	int testmethod(boolean testarg) {
+		return 1;
+	}
+}

@@ -1,0 +1,10 @@
+class Main {
+	Main() {}
+	void main1() {
+		func(9, , 9, 0 ,true);
+		write(this.handle[9 * 9 /2].rely.on);
+		writeln(8);
+		io = (intp[][]) i2;
+		return 68743943;
+	}
+}

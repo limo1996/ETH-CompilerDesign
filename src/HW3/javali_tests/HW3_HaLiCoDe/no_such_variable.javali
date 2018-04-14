@@ -1,0 +1,8 @@
+// Test NO_SUCH_VARIABLE failure.
+
+class Main {
+	void main() {
+		int a;
+		write(b);
+	}
+}

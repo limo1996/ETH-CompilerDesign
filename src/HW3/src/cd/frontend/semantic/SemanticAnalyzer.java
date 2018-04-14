@@ -3,9 +3,11 @@ package cd.frontend.semantic;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import cd.Main;
 import cd.ir.Ast.ClassDecl;
+import cd.ir.Symbol;
 import cd.ir.Symbol.ClassSymbol;
 import cd.ir.Symbol.MethodSymbol;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
@@ -68,9 +70,17 @@ public class SemanticAnalyzer {
 				MethodSymbol mm = mc.methods.get("main");
 				
 				// check for the right signature 'void main()'
-				if(!mm.parameters.isEmpty() || !mm.returnType.name.equals("void"))
+				if(!mm.parameters.isEmpty() || !mm.returnType.equals(Symbol.PrimitiveTypeSymbol.voidType)) //!mm.returnType.name.equals("void"))
 					throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
 			}
+		}
+		
+		SemanticVisitor semanticVisitor = new SemanticVisitor(this);
+		ArrayList<Symbol> ss = new ArrayList<Symbol>(2);
+		ss.add(null);
+		ss.add(null);
+		for(ClassDecl cd : classDecls) {
+			cd.accept(semanticVisitor, ss);
 		}
 	}
 }
