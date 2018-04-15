@@ -11,6 +11,7 @@ import cd.ir.Symbol;
 import cd.ir.Symbol.ClassSymbol;
 import cd.ir.Symbol.MethodSymbol;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
+import cd.ir.Symbol.TypeSymbol;
 
 public class SemanticAnalyzer {
 	
@@ -28,14 +29,22 @@ public class SemanticAnalyzer {
 	 * @return ClassSymbol if found in map or throws SemanticFaiure(NO_SUCH_TYPE) exception.
 	 */
 	public ClassSymbol getClassSymbol(String name) {
+		System.out.println("Name: " + name);
+		if(name.endsWith("[]"))
+			name = name.substring(0, name.length() - 2);
+		
 		if(name.equals("Object"))
 			return ClassSymbol.objectType;
-		/*else if (name.equals("null"))
-			return ClassSymbol.nullType;*/
+		else if (name.equals("null"))
+			return ClassSymbol.nullType;
 		else if(classDeclarations.containsKey(name))
 			return classDeclarations.get(name).sym;
 		else
-			throw new SemanticFailure(SemanticFailure.Cause.NO_SUCH_TYPE);
+			throw new SemanticFailure(SemanticFailure.Cause.NO_SUCH_TYPE, name);
+	}
+	
+	public TypeSymbol getTypeSymbol(String name) {
+		return null; // TODO: fix int in getClassSymbol
 	}
 	
 	public void check(List<ClassDecl> classDecls) throws SemanticFailure {
@@ -63,16 +72,18 @@ public class SemanticAnalyzer {
 			ClassSymbol mc = classDeclarations.get("Main").sym;
 			
 			// check for 'main' method (in class 'Main')
+			while((!mc.methods.containsKey("main") && !mc.equals(ClassSymbol.objectType)))
+				mc = mc.superClass;
+			
 			if(!mc.methods.containsKey("main"))
 				throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
-			else {
+			
+			MethodSymbol mm = mc.methods.get("main");
 				
-				MethodSymbol mm = mc.methods.get("main");
-				
-				// check for the right signature 'void main()'
-				if(!mm.parameters.isEmpty() || !mm.returnType.equals(Symbol.PrimitiveTypeSymbol.voidType)) //!mm.returnType.name.equals("void"))
-					throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
-			}
+			// check for the right signature 'void main()'
+			if(!mm.parameters.isEmpty() || !mm.returnType.equals(Symbol.PrimitiveTypeSymbol.voidType)) //!mm.returnType.name.equals("void"))
+				throw new SemanticFailure(SemanticFailure.Cause.INVALID_START_POINT);
+			
 		}
 		
 		SemanticVisitor semanticVisitor = new SemanticVisitor(this);

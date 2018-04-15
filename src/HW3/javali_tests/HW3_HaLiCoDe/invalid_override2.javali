@@ -1,4 +1,4 @@
-// Test INVALID_OVERRIDE failure.
+// Test INVALID_OVERRIDE failure. -> num of parameters
 
 class Main {
 	void main() {
@@ -11,14 +11,12 @@ class testclass{
 	boolean testfield2;
 	testclass testfield3;
 	
-	int testmethod(boolean testarg) {
-		return 1;
+	void testmethod(boolean testarg, int a) {
 	}
 }
 
 class testclass2 extends testclass {
 	
-	int testmethod(int testarg){
-		return 1;
+	void testmethod(){
 	}
 }

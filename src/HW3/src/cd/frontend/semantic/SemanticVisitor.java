@@ -27,8 +27,16 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		if(type1.equals(type2))
 			return true;
 		
-		if(type1 instanceof Symbol.ArrayTypeSymbol && type2.equals(Symbol.ClassSymbol.objectType))
-			return true;
+		if(type1 instanceof Symbol.ArrayTypeSymbol) {
+			if(type2.equals(Symbol.ClassSymbol.objectType))
+					return true;
+			
+			if(type2 instanceof Symbol.ArrayTypeSymbol) {
+				return type1.name.equals(type2.name);
+			}
+		}
+			
+		
 		
 		if(type1.equals(Symbol.ClassSymbol.nullType) && type2.isReferenceType())
 			return true;
@@ -82,7 +90,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 		// check that the argument is of type 'int'
 		if(!ast.arg().type.equals(PrimitiveTypeSymbol.intType))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Write arg not int");
 		
 		return null;
 	}
@@ -97,17 +105,20 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 			throw new SemanticFailure(SemanticFailure.Cause.OBJECT_CLASS_DEFINED);
 		
 		// check for circular inheritance
-		String actual = ast.superClass;
+		ClassSymbol cc = ast.sym.superClass;
+		while(cc != null) {
+			if(cc.equals(ast.sym))
+				throw new SemanticFailure(SemanticFailure.Cause.CIRCULAR_INHERITANCE);
+			
+			cc = cc.superClass;
+		}
+		
+		/*String actual = ast.superClass;
 		while(actual != null && !actual.equals("") && !actual.equals("Object")) {
 			if(actual.equals(ast.name))
 				throw new SemanticFailure(SemanticFailure.Cause.CIRCULAR_INHERITANCE);
 			
 			actual = analyzer.getClassSymbol(actual).ast.superClass;
-		}
-		
-		/*for(ClassDecl oc : analyzer.classDeclarations.values()) {
-			if(!oc.name.equals(ast.name) && isSubType(oc.sym,ast.sym) && isSubType(ast.sym,oc.sym))
-				throw new SemanticFailure(SemanticFailure.Cause.CIRCULAR_INHERITANCE);
 		}*/
 		
 		return null;
@@ -121,6 +132,12 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		// check for double method declaration
 		if(ast.sym != ((ClassSymbol)arg.get(0)).methods.get(ast.name))
 			throw new SemanticFailure(SemanticFailure.Cause.DOUBLE_DECLARATION);
+		
+		// check for double parameter declaration
+		for(int i = 0; i < ast.sym.parameters.size(); i++)
+			for(int j = i + 1; j < ast.sym.parameters.size(); j++)
+				if(ast.sym.parameters.get(i).name.equals(ast.sym.parameters.get(j).name))
+					throw new SemanticFailure(SemanticFailure.Cause.DOUBLE_DECLARATION);
 		
 		ClassSymbol c = (ClassSymbol)arg.get(0);
 		
@@ -140,7 +157,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 				
 				// check types of parameters
 				for(int i = 0; i < ast.sym.parameters.size(); i++) {
-					if(ast.sym.parameters.get(i).type.equals(sm.parameters.get(i).type))
+					if(!ast.sym.parameters.get(i).type.equals(sm.parameters.get(i).type))
 						throw new SemanticFailure(SemanticFailure.Cause.INVALID_OVERRIDE);
 				}
 			}
@@ -185,10 +202,12 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		ast.left().type = ast.left().accept(this, arg);
 		
 		// TODO check that the left-hand side is assignable
+		if(!((ast.left() instanceof Ast.Var) || (ast.left() instanceof Ast.Field) || (ast.left() instanceof Ast.Index)))
+			throw new SemanticFailure(SemanticFailure.Cause.NOT_ASSIGNABLE);
 		
 		// check that the type of the right-hand side is a subtype of the type of the left-hand side
 		if(!isSubType(ast.right().type,ast.left().type))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Assign types do not match: " + ast.left().type + " = " + ast.right().type);
 		
 		return null;
 	}
@@ -207,7 +226,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 		// check that the condition has type 'boolean'
 		if(!ast.condition().type.equals(PrimitiveTypeSymbol.booleanType))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Condition not boolean");
 		
 		return null;
 	}
@@ -217,14 +236,16 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		if(ast.arg() == null) {
 			if(((MethodSymbol)arg.get(1)).returnType.equals(Symbol.PrimitiveTypeSymbol.voidType))
 				return null;
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Empty return");
 		}
 		
 		ast.arg().type = ast.arg().accept(this, arg);
 		
+		MethodSymbol ms = (MethodSymbol)arg.get(1);
 		// check that the argument to the return statement is of a type that is a subtype to the return type of the function
-		if(((MethodSymbol)arg.get(1)).returnType.equals(Symbol.PrimitiveTypeSymbol.voidType) || !(isSubType(ast.arg().type,((MethodSymbol)arg.get(1)).returnType)))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+		if(ms.returnType.equals(Symbol.PrimitiveTypeSymbol.voidType) || !(isSubType(ast.arg().accept(this, arg), ms.returnType)))
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Return type mismatch " +
+				ast.arg().type.name + " of " + ms.returnType + " method: " + ms.name);
 		
 		return null;
 	}
@@ -248,35 +269,36 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 		// check that the condition has type 'boolean'
 		if(!ast.condition().type.equals(PrimitiveTypeSymbol.booleanType))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Condition not boolean");
 		
 		return null;
 	}
 	
 	public TypeSymbol binaryOp(Ast.BinaryOp ast, ArrayList<Symbol> arg) {
-		
+		System.out.println(ast.operator);
 		ast.right().type = ast.right().accept(this, arg);
 		ast.left().type = ast.left().accept(this, arg);
 		
 		// check that '==' and '!=' get types such that one is a subtype of the other and return a boolean
 		if(ast.operator.equals(BOp.B_EQUAL) || ast.operator.equals(BOp.B_NOT_EQUAL)) {
 			if(!(isSubType(ast.right().type,ast.left().type) || isSubType(ast.left().type,ast.right().type)))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "(Not)Equality type mismatch");
 			ast.type = Symbol.PrimitiveTypeSymbol.booleanType;
 		}
 		// check that '||' and '&&' get two booleans and return a boolean
 		else if(ast.operator.equals(BOp.B_OR) || ast.operator.equals(BOp.B_AND)) {
 			if(!(ast.right().type.equals(Symbol.PrimitiveTypeSymbol.booleanType) && ast.left().type.equals(Symbol.PrimitiveTypeSymbol.booleanType)))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "AND|OR type mismatch");
 			ast.type = Symbol.PrimitiveTypeSymbol.booleanType;
 		}
 		// check that all other binary operators get two integers and return the appropriate type (boolean/integer)
 		else {
 			if(!(ast.right().type.equals(Symbol.PrimitiveTypeSymbol.intType) && ast.left().type.equals(Symbol.PrimitiveTypeSymbol.intType)))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Binary not 2 ints");
 			if(ast.operator.equals(BOp.B_GREATER_OR_EQUAL) || ast.operator.equals(BOp.B_GREATER_THAN) || ast.operator.equals(BOp.B_LESS_OR_EQUAL) || ast.operator.equals(BOp.B_LESS_THAN))
 				ast.type = Symbol.PrimitiveTypeSymbol.booleanType;
-			ast.type = Symbol.PrimitiveTypeSymbol.intType;
+			else
+				ast.type = Symbol.PrimitiveTypeSymbol.intType;
 		}
 		
 		return ast.type;
@@ -303,18 +325,18 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 		// check that either the cast type is a subtype of the original type or vice versa and return an object of the cast type
 		if(!(isSubType(ast.type,ast.arg().type) || isSubType(ast.arg().type,ast.type)))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Wrong cast");
 		
 		return ast.type;
 	}
 	
 	public TypeSymbol field(Ast.Field ast, ArrayList<Symbol> arg) {
-		
+		System.err.println("Field: " + ast.fieldName);
 		ast.arg().type = ast.arg().accept(this, arg);
 		
 		// check that the argument has a class-type
 		if(!(ast.arg().type instanceof Symbol.ClassSymbol))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Field parent no class");
 		
 		ClassSymbol cc = (ClassSymbol)ast.arg().type;
 		
@@ -337,15 +359,15 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 		ast.left().type = ast.left().accept(this, arg);
 		ast.right().type = ast.right().accept(this, arg);
-		ast.type = analyzer.getClassSymbol(ast.left().type.name.substring(0, ast.left().type.name.length()-2));
+		ast.type = analyzer.getClassSymbol(ast.left().type.name);
 		
 		// check that the index is of type 'int'
 		if(!ast.right().type.equals(Symbol.PrimitiveTypeSymbol.intType))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Index not int");
 		
 		// check that the array is of an array type
 		if(!(ast.left().type instanceof Symbol.ArrayTypeSymbol))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Class not array");
 		
 		return ast.type;
 	}
@@ -363,7 +385,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 		// check that the receiver is of a class-type
 		if(!(ast.receiver().type instanceof Symbol.ClassSymbol))
-			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Mothod call not on a object");
 		
 		ClassSymbol cc = (ClassSymbol)ast.receiver().type;
 
@@ -386,7 +408,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 			// check that each actual argument has the type of the formal one
 			if(!isSubType(ast.argumentsWithoutReceiver().get(i).type,ast.sym.parameters.get(i).type))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Parameters in method call mismatch");
 		}
 		
 		return ast.sym.returnType;
@@ -403,6 +425,9 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 
 		ast.type = new Symbol.ArrayTypeSymbol(analyzer.getClassSymbol(ast.typeName));
 		
+		// check that array size is of integer type
+		if(!ast.arg().accept(this, arg).equals(Symbol.PrimitiveTypeSymbol.intType))
+			throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Array size not integer");
 		return ast.type;
 	}
 	
@@ -427,13 +452,13 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		// check that '!' gets a boolean and return a boolean
 		if(ast.operator.equals(UOp.U_BOOL_NOT)) {
 			if(!ast.arg().type.equals(Symbol.PrimitiveTypeSymbol.booleanType))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "! not getting boolean");
 			return Symbol.PrimitiveTypeSymbol.booleanType;
 		}
 		// check that unary '+' and '-' get a integer and return an integer
 		else {
 			if(!ast.arg().type.equals(Symbol.PrimitiveTypeSymbol.intType))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR);
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "+/- not getting int");
 			return Symbol.PrimitiveTypeSymbol.intType;
 		}
 	}
@@ -447,12 +472,18 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		if(((MethodSymbol)arg.get(1)).locals.containsKey(ast.name))
 			ast.sym = ((MethodSymbol)arg.get(1)).locals.get(ast.name);
 		
-		if(((ClassSymbol)arg.get(0)).fields.containsKey(ast.name))
-			ast.sym = ((ClassSymbol)arg.get(0)).fields.get(ast.name);
+		ClassSymbol actual =(ClassSymbol)arg.get(0);
+		while(actual != ClassSymbol.objectType) {
+			if(actual.fields.containsKey(ast.name)) {
+				ast.sym = actual.fields.get(ast.name);
+				break;
+			}
+			actual = analyzer.getClassSymbol(actual.superClass.name);
+		}
 		
 		// check that the variable exists (was declared)
 		if(ast.sym == null)
-			throw new SemanticFailure(SemanticFailure.Cause.NO_SUCH_VARIABLE);
+			throw new SemanticFailure(SemanticFailure.Cause.NO_SUCH_VARIABLE, "Var name: " + ast.name);
 		
 		ast.type = ast.sym.type;
 		

@@ -11,14 +11,14 @@ class testclass{
 	boolean testfield2;
 	testclass testfield3;
 	
-	int testmethod(boolean testarg) {
+	int testmethod() {
 		return 1;
 	}
 }
 
 class testclass2 extends testclass {
 	
-	int testmethod(int testarg){
-		return 1;
+	boolean testmethod(){
+		return true;
 	}
 }
