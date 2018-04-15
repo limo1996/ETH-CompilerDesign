@@ -1,0 +1,15 @@
+class Main {
+	void main() {
+		foo();
+	}
+
+	int foo() {
+		if(2 < 10){
+			if (3 == 3)
+				return 1;
+		} else if (true){
+			return 2;
+		} else 
+			return 0;
+	}
+}
