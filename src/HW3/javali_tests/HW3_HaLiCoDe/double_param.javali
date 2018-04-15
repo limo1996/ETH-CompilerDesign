@@ -1,0 +1,5 @@
+// checks for double declaration of parameter
+class Main {
+	void main() {}
+	void meth(int tmp, boolean tmp) {}
+}

@@ -35,6 +35,14 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 		return ast.sym;
 	}
 	
+	private boolean containsName(List<VariableSymbol> params, VariableSymbol next) {
+		for(VariableSymbol vs : params) {
+			if(vs.name.equals(next.name))
+				return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Visits Method declaration and all its variable declarations. 
 	 * Returns MethodSymbol with obtained parameters and locals.
@@ -43,9 +51,11 @@ public class SymbolVisitor extends AstVisitor<Symbol, VariableSymbol.Kind> {
 		MethodSymbol ms = new MethodSymbol(ast);
 		
 		for(int i = 0; i < ast.argumentNames.size(); i++) {
-			/*ms.parameters.add(this.getType(ast.argumentNames.get(i),
-					ast.argumentTypes.get(i), VariableSymbol.Kind.PARAM));*/
-			ms.parameters.add(new VariableSymbol(ast.argumentNames.get(i),getTypeSymbol(ast.argumentTypes.get(i)),VariableSymbol.Kind.PARAM));
+			VariableSymbol vs = new VariableSymbol(ast.argumentNames.get(i),getTypeSymbol(ast.argumentTypes.get(i)),VariableSymbol.Kind.PARAM);
+			if(containsName(ms.parameters, vs))
+				throw new SemanticFailure(SemanticFailure.Cause.DOUBLE_DECLARATION);
+			
+			ms.parameters.add(vs);
 		}
 		
 		for(VarDecl vd : ast.decls().childrenOfType(VarDecl.class)) {

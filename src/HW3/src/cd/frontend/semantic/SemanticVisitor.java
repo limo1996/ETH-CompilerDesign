@@ -97,10 +97,18 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 			throw new SemanticFailure(SemanticFailure.Cause.OBJECT_CLASS_DEFINED);
 		
 		// check for circular inheritance
-		for(ClassDecl oc : analyzer.classDeclarations.values()) {
+		String actual = ast.superClass;
+		while(actual != null && !actual.equals("") && !actual.equals("Object")) {
+			if(actual.equals(ast.name))
+				throw new SemanticFailure(SemanticFailure.Cause.CIRCULAR_INHERITANCE);
+			
+			actual = analyzer.getClassSymbol(actual).ast.superClass;
+		}
+		
+		/*for(ClassDecl oc : analyzer.classDeclarations.values()) {
 			if(!oc.name.equals(ast.name) && isSubType(oc.sym,ast.sym) && isSubType(ast.sym,oc.sym))
 				throw new SemanticFailure(SemanticFailure.Cause.CIRCULAR_INHERITANCE);
-		}
+		}*/
 		
 		return null;
 	}
