@@ -5,6 +5,9 @@ src/HW2/src/cd/frontend/.DS_Store
 *.log
 *.DS_Store
 
+# Prefs files
+*.prefs
+
 # svn repo
 src/.svn/
 

@@ -9,6 +9,7 @@
 		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
 		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
 		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/Users/limo/Documents/eth-courses/CompilerDesign/homework/src/HW1"/>
 			<item value="/Users/limo/Documents/eth-courses/CompilerDesign/homework/HaLiCoDe/HW1"/>
 			<item value="/Users/limo/Documents/eth-courses/CompilerDesign/homework/HaLiCoDe"/>
 		</list>

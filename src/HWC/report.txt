@@ -1,0 +1,12 @@
+-CountVisitor: -Since the registers needed are only relevant for expressions, this class could be an extension of ExprVisitor instead of AstVisitor.
+
+-StmtGenerator: -methodDecl: -It would be more elegant and easier to extend if the repeatedly used strings (such as "STR_D" and "STR_E") were stored in a global variable.
+	-builtInWrite: -16 bytes are being reserved on the stack where 8 would be sufficient.
+
+-ExprVisitor: -There are very few comments all around and also some that are wrong.
+	-binaryOp: -The code is somewhat inconsistent when it comes to where the code is emitted (at some points inside the switch statements at others outside).
+		-The part that handles the division is unreadable partly due to the lack of comments.
+		-The switch statement is somewhat unconventionally formated.
+		-visit() is being called multiple times which is sometimes redundant.
+		-Using arrayindexing for the registers is unnecessary since there are specialized methods for the job.
+		-Doing stack allocation relative to the base pointer instead of the stack pointer might work for this task (where there are no method calls) but is to be improved for the general case.
