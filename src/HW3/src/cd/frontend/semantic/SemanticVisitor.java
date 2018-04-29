@@ -32,7 +32,6 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		if(type1 instanceof Symbol.ArrayTypeSymbol && type2.equals(Symbol.ClassSymbol.objectType))
 			return true;
 		
-		
 		if(type1.equals(Symbol.ClassSymbol.nullType) && type2.isReferenceType())
 			return true;
 		
@@ -134,7 +133,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 				// check types of parameters
 				for(int i = 0; i < ast.sym.parameters.size(); i++) {
 					if(!ast.sym.parameters.get(i).type.equals(cc.methods.get(ast.sym.name).parameters.get(i).type))
-						throw new SemanticFailure(SemanticFailure.Cause.INVALID_OVERRIDE, "Parameter " + Integer.toString(i) + " of method " + cc.name + ":" + ast.sym.name + " overriding " + cc.name + ":" + ast.sym.name + " has type " + ast.sym.parameters.get(i).type.name + " instead of expected " + cc.methods.get(ast.name).parameters.get(i).type.name + ".");
+						throw new SemanticFailure(SemanticFailure.Cause.INVALID_OVERRIDE, "Parameter " + Integer.toString(i+1) + " of method " + cc.name + ":" + ast.sym.name + " overriding " + cc.name + ":" + ast.sym.name + " has type " + ast.sym.parameters.get(i).type.name + " instead of expected " + cc.methods.get(ast.name).parameters.get(i).type.name + ".");
 				}
 				
 				break;
@@ -388,7 +387,7 @@ public class SemanticVisitor extends AstVisitor<TypeSymbol, ArrayList<Symbol>> {
 		
 			// check that each actual argument has the type of the formal one
 			if(!isSubType(ast.argumentsWithoutReceiver().get(i).type,ast.sym.parameters.get(i).type))
-				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Actual type " + ast.argumentsWithoutReceiver().get(i).type.name + " of parameter " + Integer.toString(i) + " of call of method " + ast.receiver().type.name + ":" + ast.sym.name + " does not match formal type" + ast.sym.parameters.get(i).type.name + ".");
+				throw new SemanticFailure(SemanticFailure.Cause.TYPE_ERROR, "Actual type " + ast.argumentsWithoutReceiver().get(i).type.name + " of parameter " + Integer.toString(i+1) + " of call of method " + ast.receiver().type.name + ":" + ast.sym.name + " does not match formal type" + ast.sym.parameters.get(i).type.name + ".");
 		}
 		
 		return ast.sym.returnType;

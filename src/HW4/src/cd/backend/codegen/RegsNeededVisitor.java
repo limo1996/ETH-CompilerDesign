@@ -76,7 +76,7 @@ public class RegsNeededVisitor extends AstVisitor<Integer, Void> {
 	}
 
 	@Override
-	public Integer assign(Assign ast, Void arg) {
+	public Integer assign(Assign ast, Void arg) {		
 		return max(calc(ast.left()) + 1, calc(ast.right()));
 	}
 	

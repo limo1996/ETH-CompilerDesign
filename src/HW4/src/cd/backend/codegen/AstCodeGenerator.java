@@ -20,9 +20,8 @@ public class AstCodeGenerator {
 	protected final RegisterManager rm = new RegisterManager();
 
 	AstCodeGenerator(Main main, Writer out) {
-		{
-			initMethodData();
-		}
+		
+		initMethodData();
 		
 		this.emit = new AssemblyEmitter(out);
 		this.main = main;
@@ -64,9 +63,7 @@ public class AstCodeGenerator {
 
 
 	protected void initMethodData() {
-		{
-			rm.initRegisters();
-		}
+		rm.initRegisters();
 	}
 
 

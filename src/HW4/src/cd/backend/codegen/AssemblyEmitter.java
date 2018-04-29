@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 import cd.Config;
+import cd.backend.codegen.RegisterManager.ByteRegister;
 import cd.backend.codegen.RegisterManager.Register;
 
 public class AssemblyEmitter {

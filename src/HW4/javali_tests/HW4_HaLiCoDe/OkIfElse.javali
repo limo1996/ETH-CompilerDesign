@@ -1,0 +1,19 @@
+class Main {
+	void main() {
+		int i;
+		int sum;
+		
+		i = 0;
+		sum = 0;
+		while (i <= 10) {
+			if (i % 2 == 0) {
+				sum = sum + i;
+			} else {
+				sum = sum + 10 - i;
+			}
+			i = i + 1;
+		}
+		
+		write(sum);
+	}
+}

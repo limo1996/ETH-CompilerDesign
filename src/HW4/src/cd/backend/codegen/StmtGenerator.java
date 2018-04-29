@@ -62,111 +62,187 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 	// Emit vtable for arrays of this class:
 	@Override
 	public Register classDecl(ClassDecl ast, Void arg) {
-		{
-			if (!ast.name.equals("Main"))
-				throw new RuntimeException(
-						"Only expected one class, named 'main'");
-			return visitChildren(ast, arg);
-		}
+		if (!ast.name.equals("Main"))
+			throw new RuntimeException(
+					"Only expected one class, named 'main'");
+		return visitChildren(ast, arg);
 	}
 
 	@Override
 	public Register methodDecl(MethodDecl ast, Void arg) {
-		{
-			// ------------------------------------------------------------
-			// Homework 1 Prologue Generation:
-			// Rather simplistic due to limited requirements!
+		// ------------------------------------------------------------
+		// Homework 1 Prologue Generation:
+		// Rather simplistic due to limited requirements!
 
-			if (!ast.name.equals("main"))
-				throw new RuntimeException(
-						"Only expected one method named 'main'");
+		if (!ast.name.equals("main"))
+			throw new RuntimeException(
+					"Only expected one method named 'main'");
 
-			// Emit some useful string constants:
-			cg.emit.emitRaw(Config.DATA_STR_SECTION);
-			cg.emit.emitLabel("STR_NL");
-			cg.emit.emitRaw(Config.DOT_STRING + " \"\\n\"");
-			cg.emit.emitLabel("STR_D");
-			cg.emit.emitRaw(Config.DOT_STRING + " \"%d\"");
+		// Emit some useful string constants:
+		cg.emit.emitRaw(Config.DATA_STR_SECTION);
+		cg.emit.emitLabel("STR_NL");
+		cg.emit.emitRaw(Config.DOT_STRING + " \"\\n\"");
+		cg.emit.emitLabel("STR_D");
+		cg.emit.emitRaw(Config.DOT_STRING + " \"%d\"");
 
-			// Emit a label for each variable:
-			// Let the AST Visitor do the iteration for us.
-			cg.emit.emitRaw(Config.DATA_INT_SECTION);
-			ast.decls().accept(new AstVisitor<Void, Void>() {
-				@Override
-				public Void varDecl(VarDecl ast, Void arg) {
-					if (!ast.type.equals("int"))
-						throw new RuntimeException(
-								"Only int variables expected");
-					cg.emit.emitLabel(AstCodeGenerator.VAR_PREFIX + ast.name);
-					cg.emit.emitConstantData("0");
-					return null;
-				}
-			}, null);
+		// Emit a label for each variable:
+		// Let the AST Visitor do the iteration for us.
+		cg.emit.emitRaw(Config.DATA_INT_SECTION);
+		ast.decls().accept(new AstVisitor<Void, Void>() {
+			@Override
+			public Void varDecl(VarDecl ast, Void arg) {
+				if (!ast.type.equals("int"))
+					throw new RuntimeException(
+							"Only int variables expected");
+				cg.emit.emitLabel(AstCodeGenerator.VAR_PREFIX + ast.name);
+				cg.emit.emitConstantData("0");
+				return null;
+			}
+		}, null);
 
-			// Emit the main() method:
-			cg.emit.emitRaw(Config.TEXT_SECTION);
-			cg.emit.emitRaw(".globl " + MAIN);
-			cg.emit.emitLabel(MAIN);
+		// Emit the main() method:
+		cg.emit.emitRaw(Config.TEXT_SECTION);
+		cg.emit.emitRaw(".globl " + MAIN);
+		cg.emit.emitLabel(MAIN);
 
-			cg.emit.emit("enter", "$8", "$0");
-			cg.emit.emit("and", -16, STACK_REG);
-			gen(ast.body());
-			cg.emitMethodSuffix(true);
-			return null;
-		}
+		cg.emit.emit("enter", "$8", "$0");
+		cg.emit.emit("and", -16, STACK_REG);
+		gen(ast.body());
+		cg.emitMethodSuffix(true);
+		return null;
 	}
 
 	@Override
 	public Register ifElse(IfElse ast, Void arg) {
-		throw new ToDoException();
+	
+		/*
+		 * Generate code for the evaluation of the expression
+		 * and a label to jump to if it evaluates to false.
+		 */
+		Register condition = cg.eg.gen(ast.condition());
+		String otherwiseLabel = cg.emit.uniqueLabel();
+		
+		/*
+		 * Test whether the condition register holds 0 (false)
+		 * and jump if so.
+		 */
+		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), condition);
+		cg.emit.emit("je", otherwiseLabel);
+		
+		/*
+		 * Generate code for the then-body.
+		 */
+		gen(ast.then());
+		
+		/*
+		 * Determine whether ast is a if-then
+		 * or a if-then-else statement.
+		 */
+		if(ast.otherwise() != null) {
+			
+			/*
+			 * If there is an else-part an (unconditional) jump
+			 * (and a corresponding label) over it is needed after the then-body.
+			 */
+			String thenLabel = cg.emit.uniqueLabel();
+			cg.emit.emit("jmp", thenLabel);
+			
+			/*
+			 * Emit label and code for the else-part.
+			 */
+			cg.emit.emitLabel(otherwiseLabel);
+			gen(ast.otherwise());
+			
+			/*
+			 * Label for the (unconditional) jump taken after the then-body.
+			 */
+			cg.emit.emitLabel(thenLabel);
+		} else {
+			
+			/*
+			 * If there is no else-part simply jump over the then-body
+			 * to this label if the condition is not met.
+			 */
+			cg.emit.emitLabel(otherwiseLabel);
+		}
+		
+		return null;
 	}
 
 	@Override
 	public Register whileLoop(WhileLoop ast, Void arg) {
-		throw new ToDoException();
+		
+		/*
+		 * Generate labels needed.
+		 */
+		String conditionLabel = cg.emit.uniqueLabel();
+		String bodyLabel = cg.emit.uniqueLabel();
+		
+		/*
+		 * Unconditionally jump into the expression evaluation from outside.
+		 */
+		cg.emit.emit("jmp", conditionLabel);
+		
+		/*
+		 * Emit label and code for the body.
+		 */
+		cg.emit.emitLabel(bodyLabel);
+		gen(ast.body());
+		
+		/*
+		 * Jump here when entering the loop for the first time.
+		 */
+		cg.emit.emitLabel(conditionLabel);
+		
+		/*
+		 * Generate code for the evaluation of the condition.
+		 */
+		Register condition = cg.eg.gen(ast.condition());
+		
+		/*
+		 * Test whether the condition is non-zero (true)
+		 * and jump to the body if so.
+		 */
+		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), condition);
+		cg.emit.emit("jne", bodyLabel);
+		
+		return null;
 	}
 
 	@Override
 	public Register assign(Assign ast, Void arg) {
-		{
-			if (!(ast.left() instanceof Var))
-				throw new RuntimeException("LHS must be var in HW1");
-			Var var = (Var) ast.left();
-			Register rhsReg = cg.eg.gen(ast.right());
-			cg.emit.emit("movl", rhsReg, AstCodeGenerator.VAR_PREFIX + var.name);
-			cg.rm.releaseRegister(rhsReg);
-			return null;
-		}
+		if (!(ast.left() instanceof Var))
+			throw new RuntimeException("LHS must be var in HW1");
+		Var var = (Var) ast.left();
+		Register rhsReg = cg.eg.gen(ast.right());
+		cg.emit.emit("movl", rhsReg, AstCodeGenerator.VAR_PREFIX + var.name);
+		cg.rm.releaseRegister(rhsReg);
+		return null;
 	}
 
 	@Override
 	public Register builtInWrite(BuiltInWrite ast, Void arg) {
-		{
-			Register reg = cg.eg.gen(ast.arg());
-			cg.emit.emit("sub", constant(16), STACK_REG);
-			cg.emit.emitStore(reg, 4, STACK_REG);
-			cg.emit.emitStore("$STR_D", 0, STACK_REG);
-			cg.emit.emit("call", Config.PRINTF);
-			cg.emit.emit("add", constant(16), STACK_REG);
-			cg.rm.releaseRegister(reg);
-			return null;
-		}
+		Register reg = cg.eg.gen(ast.arg());
+		cg.emit.emit("sub", constant(16), STACK_REG);
+		cg.emit.emitStore(reg, 4, STACK_REG);
+		cg.emit.emitStore("$STR_D", 0, STACK_REG);
+		cg.emit.emit("call", Config.PRINTF);
+		cg.emit.emit("add", constant(16), STACK_REG);
+		cg.rm.releaseRegister(reg);
+		return null;
 	}
 
 	@Override
 	public Register builtInWriteln(BuiltInWriteln ast, Void arg) {
-		{
-			cg.emit.emit("sub", constant(16), STACK_REG);
-			cg.emit.emitStore("$STR_NL", 0, STACK_REG);
-			cg.emit.emit("call", Config.PRINTF);
-			cg.emit.emit("add", constant(16), STACK_REG);
-			return null;
-		}
+		cg.emit.emit("sub", constant(16), STACK_REG);
+		cg.emit.emitStore("$STR_NL", 0, STACK_REG);
+		cg.emit.emit("call", Config.PRINTF);
+		cg.emit.emit("add", constant(16), STACK_REG);
+		return null;
 	}
 
 	@Override
 	public Register returnStmt(ReturnStmt ast, Void arg) {
 		throw new ToDoException();
 	}
-
 }

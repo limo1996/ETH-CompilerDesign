@@ -40,3 +40,7 @@ src/.DS_Store
 src/HW2/.DS_Store
 src/HW2/src/.DS_Store
 src/HW2/src/cd/.DS_Store
+src/.metadata/
+src/.recommenders/
+src/HW2/bin/cd/
+src/HW4/.metadata/

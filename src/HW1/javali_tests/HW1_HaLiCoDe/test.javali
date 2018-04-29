@@ -1,15 +1,8 @@
-/* Should be possible with 2 registers.*/
 class Main {
 	void main() {
 		int a;
-		a = 1073741824;
-		write((((((((a/2)/4)/8)/16)/32)/64)/128)/256);
+		int b;
+		
+		a = c();
 	}
 }
-/* Just like this is.
-class Main {
-	void main() {
-		write((((((((1+2)+3)+4)+5)+6)+7)+8)+9);
-	}
-}
-*/
