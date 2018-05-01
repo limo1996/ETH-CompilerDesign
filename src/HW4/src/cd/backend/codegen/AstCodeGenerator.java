@@ -1,11 +1,20 @@
 package cd.backend.codegen;
 
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
+import cd.Config;
 import cd.Main;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast.ClassDecl;
+import cd.ir.Symbol;
+import cd.ir.Symbol.ClassSymbol;
 
 public class AstCodeGenerator {
 
@@ -56,9 +65,106 @@ public class AstCodeGenerator {
 	 * </ol>
 	 */
 	public void go(List<? extends ClassDecl> astRoots) {
-		for (ClassDecl ast : astRoots) {
-			sg.gen(ast);
+		// emit VTables
+		emitVTables(astRoots);
+		// find main and emit prologue
+		for(ClassDecl ast : astRoots) {
+			if(ast.name.equals("Main")) {
+				emitPrologue(ast);
+				break;
+			}
 		}
+		// emit code for classes
+		for (ClassDecl ast : astRoots) {
+			sg.classDecl(ast, new Context(ast));
+		}
+	}
+	
+	private void emitVTables(List<? extends ClassDecl> astRoots) {
+		// keep track of Classes that were processed 
+		Set<ClassSymbol> processed = new HashSet<ClassSymbol>();
+		//processed.add(ClassSymbol.objectType);
+		// start region
+		emit.emitComment("VTables region");
+		emit.emitRaw(Config.DATA_INT_SECTION);
+		// for each class
+		for(ClassDecl ast : astRoots) {
+			// skip if already processed
+			if(processed.contains(ast.sym))
+				continue;
+			
+			Stack<ClassSymbol> toProcess = new Stack<ClassSymbol>();
+			ClassSymbol curr = ast.sym;
+			// traverse the inheritance tree up till we find a class that was processed
+			while(!processed.contains(curr) && curr != null) {
+				toProcess.push(curr);
+				curr = curr.superClass;
+			}
+			// reverse order and process
+			while(!toProcess.empty()) {
+				curr = toProcess.pop();
+				emitTables(curr);
+				processed.add(curr);
+			}
+		}
+	}
+	
+	private void emitTables(ClassSymbol sym) {
+		// build OTable
+		sym.o_table = new OTable(sym);
+		// build VTable
+		sym.v_table = new VTable(sym);
+		// emit VTable
+		sym.v_table.emit(emit);
+	}
+	
+	private void emitPrologue(ClassDecl main) {
+		// Emit some useful string constants:
+		emit.emitRaw(Config.DATA_STR_SECTION);
+		emit.emitLabel("STR_NL");
+		emit.emitRaw(Config.DOT_STRING + " \"\\n\"");
+		emit.emitLabel("STR_D");
+		emit.emitRaw(Config.DOT_STRING + " \"%d\"");
+		
+		// Emit main
+		emit.emitRaw(Config.TEXT_SECTION);
+		emit.emitRaw(".global " + Config.MAIN);
+		emit.emitLabel(Config.MAIN);
+		
+		// emit function prologue
+		emit.emit("enter", AssemblyEmitter.constant(8), AssemblyEmitter.constant(0));
+		emit.emit("and", -16, Register.ESP);
+		
+		// EAX should not be in use!
+		assert(!rm.isInUse(Register.EAX));
+		Register main_ptr = rm.getRegister();
+		
+		List<String> args = new ArrayList<String>();
+		args.add(AssemblyEmitter.constant(BackendUtils.size(main)));
+		args.add(AssemblyEmitter.constant(Config.SIZEOF_PTR));
+		
+		// new Main()
+		BackendUtils.pushArguments(emit, args, 0);
+		emit.emit("call", Config.CALLOC);
+		emit.emitMove(Register.EAX, main_ptr);
+		BackendUtils.popArguments(emit, args, 0);
+		
+		// get pointer to vtable of main
+		Register vtable_ptr = rm.getRegister();
+		emit.emit("leal", main.sym.v_table.name(), vtable_ptr);
+		emit.emitMove(vtable_ptr, AssemblyEmitter.registerOffset(0, main_ptr));
+		
+		// save this on the stack, get offset of the function and call it
+		emit.emitMove(main_ptr, AssemblyEmitter.registerOffset(0, Register.ESP));
+		int main_offset = main.sym.v_table.methodOffset("main");
+		emit.emit("addl", AssemblyEmitter.constant(main_offset), vtable_ptr);
+		emit.emitLoad(0, vtable_ptr, vtable_ptr);
+		emit.emit("call", "*" + vtable_ptr);
+		
+		// release registers and return
+		rm.releaseRegister(vtable_ptr);
+		rm.releaseRegister(main_ptr);
+		emitMethodSuffix(true);
 	}
 
 
