@@ -15,6 +15,10 @@ src/.svn/
 *.err
 *.javali.err
 
+# javali shit 
+*.bin
+*.s
+
 # ref files
 *.ref
 
