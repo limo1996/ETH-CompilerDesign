@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cd.backend.codegen.OTable;
+import cd.backend.codegen.VTable;
+
 public abstract class Symbol {
 	
 	public final String name;
@@ -100,6 +103,10 @@ public abstract class Symbol {
 			new HashMap<String, VariableSymbol>();
 		public final Map<String, MethodSymbol> methods =
 			new HashMap<String, MethodSymbol>();
+		
+		/* Vtable and OTable for this class*/
+		public VTable v_table;
+		public OTable o_table;
 
 		/** Symbols for the built-in Object and null types */
 		public static final ClassSymbol nullType = new ClassSymbol("<null>");

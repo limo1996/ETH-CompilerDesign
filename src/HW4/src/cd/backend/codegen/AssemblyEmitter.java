@@ -158,4 +158,24 @@ public class AssemblyEmitter {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	/*
+	 * Helper method for relational operator.
+	 * 
+	 * This method is needed because the SETcc (conditional set) instruction
+	 * works only on byte registers and a reasonable alternative has no been found. 
+	 */
+	void relationalOperator(String op, Register leftReg, Register rightReg) {
+		
+		String trueLabel = uniqueLabel();
+		String falseLabel = uniqueLabel();
+		
+		emit("cmpl", rightReg, leftReg);
+		emit(op, trueLabel);
+		emitMove(AssemblyEmitter.constant(0), leftReg);
+		emit("jmp", falseLabel);
+		emitLabel(trueLabel);
+		emitMove(AssemblyEmitter.constant(1), leftReg);
+		emitLabel(falseLabel);
+	}
 }
