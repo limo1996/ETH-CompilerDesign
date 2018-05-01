@@ -1,0 +1,15 @@
+class Main {
+	void main () {
+		int i1, i2, i3;
+		i1 = 2;
+		i2 = 2000;
+		while(i1 < i2) {
+			i1 = i1 * i1 * i1;
+			i2 = i2 * i2;
+		}
+		write(i1);
+		writeln();
+		write(i2);
+		writeln();
+	}
+}

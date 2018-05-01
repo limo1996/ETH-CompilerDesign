@@ -1,0 +1,33 @@
+class Main {
+	void main() {
+		int i1, i2, i3;
+		i1 = read();
+		i2 = read();
+		i3 = read();
+		
+		if(i1 >= i2) {
+			if(i2 == i1){
+				i3 = i2;
+				write(i2);
+			} else {
+				if(i2 == i3){
+					write(-1);
+				}
+				write(i1);
+			}
+		} else {
+			write(i1);
+			write(i2);
+			
+			i3 = i1 + i1 * i2;
+		}
+
+		if(i3 == i2) {
+			i3 = i3 + i2;
+		}
+
+		write(i3);
+		writeln();
+	}
+}
+		

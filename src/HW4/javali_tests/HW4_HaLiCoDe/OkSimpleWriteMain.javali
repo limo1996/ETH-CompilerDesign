@@ -1,0 +1,13 @@
+/* Tests simple Main class with one method - main with mulitple writes */
+class Main {
+	void main() {
+		write(10);
+		writeln();
+		write(9);
+		writeln();
+		write(8);
+		writeln();
+		write(7);
+		writeln();
+	}
+}

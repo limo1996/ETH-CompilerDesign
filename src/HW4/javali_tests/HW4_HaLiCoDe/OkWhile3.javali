@@ -1,0 +1,24 @@
+
+class Main {
+    void main () {
+        int i1, i2, i3, i4; 
+        i1 = 2;
+        i2 = 2000;
+		i3 = 10000;
+		i4 = 1;
+		while(i4 < i3) {
+        	while(i1 < i2) {
+            	i1 = i1 * i1 * i1; 
+            	i2 = i2 * i2; 
+        	}
+			i4 = i4 + (i2 - i1);
+			i1 = 2;
+			i2 = 2000;
+		}
+   
+        write(i1 + i2);
+        writeln();
+        write(i3 + i4);
+        writeln();
+    }   
+}

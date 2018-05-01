@@ -1,0 +1,5 @@
+/* Nothing else just main */
+class Main {
+	void main() {
+	}
+}

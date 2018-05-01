@@ -1,0 +1,30 @@
+class Main {
+
+	void main() {
+		int guess, guessed, low, high, middle;
+		low = 0;
+		high = 1000;
+		guess = 767;
+		
+		while(low < high) {
+			middle = low + (high - low) / 2;
+			if(middle < guess) {
+				low = middle + 1;
+			} else {
+				if(middle > guess) {
+					high = middle;
+				} else {
+					guessed = middle;
+					low = high;
+				}
+			}
+		}
+
+		if(guess == guessed) {
+			write(guess);
+		} else {
+			write(-1);
+		}
+		writeln();
+	}
+}

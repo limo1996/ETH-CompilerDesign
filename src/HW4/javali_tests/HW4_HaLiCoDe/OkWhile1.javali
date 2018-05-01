@@ -1,0 +1,16 @@
+class Main {
+	void main() {
+		int a1, a2, a3, step;
+		a1 = 1000;
+		a2 = 1;
+		step = 3;
+	
+		while(a1 < a2) {
+			while(a1 < a1 + step) {
+				a1 = a1 + 1;
+			}
+		}
+
+		write(a1 - step);
+	}
+}	
