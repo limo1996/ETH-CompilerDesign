@@ -7,6 +7,7 @@ import static cd.backend.codegen.RegisterManager.STACK_REG;
 import java.util.Arrays;
 import java.util.List;
 
+import cd.Config;
 import cd.ToDoException;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast;
@@ -26,14 +27,13 @@ import cd.ir.Ast.ThisRef;
 import cd.ir.Ast.UnaryOp;
 import cd.ir.Ast.Var;
 import cd.ir.ExprVisitor;
-import cd.ir.Symbol.PrimitiveTypeSymbol;
 import cd.util.debug.AstOneLine;
 
 /**
  * Generates code to evaluate expressions. After emitting the code, returns a
  * String which indicates the register where the result can be found.
  */
-class ExprGenerator extends ExprVisitor<Register, Void> {
+class ExprGenerator extends ExprVisitor<Register, Context> {
 	protected final AstCodeGenerator cg;
 
 	ExprGenerator(AstCodeGenerator astCodeGenerator) {
@@ -45,10 +45,10 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 	}
 
 	@Override
-	public Register visit(Expr ast, Void arg) {
+	public Register visit(Expr ast, Context arg) {
 		try {
 			cg.emit.increaseIndent("Emitting " + AstOneLine.toString(ast));
-			return super.visit(ast, null);
+			return super.visit(ast, arg);
 		} finally {
 			cg.emit.decreaseIndent();
 		}
@@ -78,7 +78,7 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 	}
 	
 	@Override
-	public Register binaryOp(BinaryOp ast, Void arg) {
+	public Register binaryOp(BinaryOp ast, Context arg) {
 	
 		int leftRN = cg.rnv.calc(ast.left());
 		int rightRN = cg.rnv.calc(ast.right());
@@ -86,27 +86,44 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 		Register leftReg, rightReg;
 		if (leftRN > rightRN) {
 			
-			leftReg = gen(ast.left());
-			rightReg = gen(ast.right());
+			leftReg = visit(ast.left(), arg);
+			
+			/*
+			 * Store LHS on the stack if needed.
+			 */
+			if(rightRN >= cg.rm.availableRegisters()) {
+				cg.emit.emit("pushl", leftReg);
+				cg.rm.releaseRegister(leftReg);
+			}
+			
+			rightReg = visit(ast.right(), arg);
+			
+			/*
+			 *  Reload LHS from the stack if needed.
+			 */
+			if(rightRN >= cg.rm.availableRegisters()) {
+				leftReg = cg.rm.getRegister();
+				cg.emit.emit("popl", leftReg);
+			}
 			
 		} else {
 			
-			rightReg = gen(ast.right());
+			rightReg = visit(ast.right(), arg);
 			
 			/*
 			 * Store RHS on the stack if needed.
 			 */
-			if(leftRN >= 6) {
+			if(leftRN >= cg.rm.availableRegisters()) {
 				cg.emit.emit("pushl", rightReg);
 				cg.rm.releaseRegister(rightReg);
 			}
 			
-			leftReg = gen(ast.left());
+			leftReg = visit(ast.left(), arg);
 			
 			/*
 			 *  Reload RHS from the stack if needed.
 			 */
-			if(leftRN >= 6) {
+			if(leftRN >= cg.rm.availableRegisters()) {
 				rightReg = cg.rm.getRegister();
 				cg.emit.emit("popl", rightReg);
 			}
@@ -137,7 +154,7 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 			cg.emit.emit("cmpl", AssemblyEmitter.constant(0), rightReg);
 			cg.emit.emit("jne", legalLabel);
 			cg.emit.emit("pushl", AssemblyEmitter.constant(7));
-			cg.emit.emit("call", "exit");
+			cg.emit.emit("call", Config.EXIT);
 			cg.emit.emitLabel(legalLabel);
 			
 			
@@ -211,8 +228,8 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 	}
 
 	@Override
-	public Register booleanConst(BooleanConst ast, Void arg) {
-		
+	public Register booleanConst(BooleanConst ast, Context arg) {
+		//cg.emit.emitConstantData(data);
 		/*
 		 * Get a free register and set it to 0 (for false) or 1 (for true).
 		 */
@@ -226,7 +243,7 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 	}
 
 	@Override
-	public Register builtInRead(BuiltInRead ast, Void arg) {
+	public Register builtInRead(BuiltInRead ast, Context arg) {
 		Register reg = cg.rm.getRegister();
 		cg.emit.emit("sub", constant(16), STACK_REG);
 		cg.emit.emit("leal", AssemblyEmitter.registerOffset(8, STACK_REG), reg);
@@ -239,63 +256,142 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 	}
 
 	@Override
-	public Register cast(Cast ast, Void arg) {
+	public Register cast(Cast ast, Context arg) {
 		throw new ToDoException();
 	}
 
 	@Override
-	public Register index(Index ast, Void arg) {
-		throw new ToDoException();
+	public Register index(Index ast, Context arg) {
+		
+		int leftRN = cg.rnv.calc(ast.left());
+		int rightRN = cg.rnv.calc(ast.right());
+		
+		if(leftRN > rightRN) {
+			
+			Register leftReg = visit(ast.left(), arg);
+			
+			/*
+			 * Store the computed value if needed.
+			 */
+			if(rightRN >= cg.rm.availableRegisters()) {
+				cg.emit.emit("pushl", leftReg);
+				cg.rm.releaseRegister(leftReg);
+			}
+			
+			Register rightReg = visit(ast.right(), arg);
+			
+			/*
+			 * Restore previously stored value if needed.
+			 */
+			if(rightRN >= cg.rm.availableRegisters()) {
+				leftReg = cg.rm.getRegister();
+				cg.emit.emit("popl", leftReg);
+			}
+		} else {
+			
+			Register rightReg = visit(ast.right(), arg);
+						
+			/*
+			 * Store the computed value if needed.
+			 */
+			if(leftRN >= cg.rm.availableRegisters()) {
+				cg.emit.emit("pushl", rightReg);
+				cg.rm.releaseRegister(rightReg);
+			}
+			
+			Register leftReg = visit(ast.right(), arg);
+			
+			/*
+			 * Restore previously stored value if needed.
+			 */
+			if(leftRN >= cg.rm.availableRegisters()) {
+				rightReg = cg.rm.getRegister();
+				cg.emit.emit("popl", rightReg);
+			}
+		}
+		
+		//cg.emit.emit("leal", )
+		
+		return null;
 	}
 
 	@Override
-	public Register intConst(IntConst ast, Void arg) {
+	public Register intConst(IntConst ast, Context arg) {
 		Register reg = cg.rm.getRegister();
 		cg.emit.emitMove(AssemblyEmitter.constant(ast.value), reg);
 		return reg;
 	}
 
 	@Override
-	public Register field(Field ast, Void arg) {
-		if(ast.type instanceof PrimitiveTypeSymbol)
-			
+	public Register field(Field ast, Context arg) {
+		throw new ToDoException();	
 	}
 
 	@Override
-	public Register newArray(NewArray ast, Void arg) {
+	public Register newArray(NewArray ast, Context arg) {
+		
+		Register reg = gen(ast.arg());
+		
+		/*
+		 * Test whether reg holds a number less than 0 and exit with code 5 if so.
+		 */
+		String legalLabel = cg.emit.uniqueLabel();
+		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), reg);
+		cg.emit.emit("jb", legalLabel);
+		cg.emit.emit("pushl", AssemblyEmitter.constant(5));
+		cg.emit.emit("call", Config.EXIT);
+		cg.emit.emitLabel(legalLabel);
+		
+		/*
+		 * Push size of an element (always 4 bytes in this case).
+		 */
+		cg.emit.emit("pushl", AssemblyEmitter.constant(Config.SIZEOF_PTR));
+		
+		/*
+		 * Push number of elements (+1 for the size and +1 for the vprt).
+		 */
+		cg.emit.emit("addl", AssemblyEmitter.constant(2), reg);
+		cg.emit.emit("pushl", reg);
+		
+		cg.emit.emit("call", Config.CALLOC);
+		
+		//cg.emit.emitMove;
+		
+		cg.rm.releaseRegister(reg);
+		
+		return Register.EAX;
+	}
+
+	@Override
+	public Register newObject(NewObject ast, Context arg) {
 		throw new ToDoException();
 	}
 
 	@Override
-	public Register newObject(NewObject ast, Void arg) {
-		throw new ToDoException();
-	}
-
-	@Override
-	public Register nullConst(NullConst ast, Void arg) {
+	public Register nullConst(NullConst ast, Context arg) {
 		
 		/*
 		 * Get a free register and set it to 0.
 		 */
 		Register reg = cg.rm.getRegister();
-		cg.emit.emitMove(AssemblyEmitter.constant(0), reg);
+		cg.emit.emit("xor", reg, reg);
 		
 		return reg;
 	}
 
 	@Override
-	public Register thisRef(ThisRef ast, Void arg) {
+	public Register thisRef(ThisRef ast, Context arg) {
 		throw new ToDoException();
 	}
 
 	@Override
-	public Register methodCall(MethodCallExpr ast, Void arg) {
+	public Register methodCall(MethodCallExpr ast, Context arg) {
 		throw new ToDoException();
 	}
 
 	@Override
-	public Register unaryOp(UnaryOp ast, Void arg) {
-		Register argReg = gen(ast.arg());
+	public Register unaryOp(UnaryOp ast, Context arg) {
+		Register argReg = visit(ast.arg(), arg);
 		switch (ast.operator) {
 		case U_PLUS:
 			break;
@@ -313,9 +409,11 @@ class ExprGenerator extends ExprVisitor<Register, Void> {
 	}
 	
 	@Override
-	public Register var(Var ast, Void arg) {
+	public Register var(Var ast, Context arg) {
 		Register reg = cg.rm.getRegister();
-		cg.emit.emitMove(AstCodeGenerator.VAR_PREFIX + ast.name, reg);
+		int offset = arg.getOffset(ast.sym.name);
+		String op = arg.returnValue ? "movl" : "leal";
+		cg.emit.emit(op, AssemblyEmitter.registerOffset(offset, Register.EBP), reg);
 		return reg;
 	}
 }

@@ -1,13 +1,12 @@
 package cd.backend.codegen;
 
-import static cd.Config.MAIN;
 import static cd.backend.codegen.AssemblyEmitter.constant;
 import static cd.backend.codegen.RegisterManager.STACK_REG;
 
+import java.util.Arrays;
 import java.util.List;
 
 import cd.Config;
-import cd.ToDoException;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast;
 import cd.ir.Ast.Assign;
@@ -19,8 +18,6 @@ import cd.ir.Ast.IfElse;
 import cd.ir.Ast.MethodCall;
 import cd.ir.Ast.MethodDecl;
 import cd.ir.Ast.ReturnStmt;
-import cd.ir.Ast.Var;
-import cd.ir.Ast.VarDecl;
 import cd.ir.Ast.WhileLoop;
 import cd.ir.AstVisitor;
 import cd.ir.Symbol.MethodSymbol;
@@ -29,7 +26,7 @@ import cd.util.debug.AstOneLine;
 /**
  * Generates code to process statements and declarations.
  */
-class StmtGenerator extends AstVisitor<Register, Void> {
+class StmtGenerator extends AstVisitor<Register, Context> {
 	protected final AstCodeGenerator cg;
 
 	StmtGenerator(AstCodeGenerator astCodeGenerator) {
@@ -41,7 +38,7 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 	}
 
 	@Override
-	public Register visit(Ast ast, Void arg) {
+	public Register visit(Ast ast, Context arg) {
 		try {
 			cg.emit.increaseIndent("Emitting " + AstOneLine.toString(ast));
 			return super.visit(ast, arg);
@@ -51,8 +48,10 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 	}
 
 	@Override
-	public Register methodCall(MethodCall ast, Void dummy) {
-		throw new ToDoException();
+	public Register methodCall(MethodCall ast, Context arg) {
+		Register ret_value = ast.getMethodCallExpr().accept(this, arg);
+		cg.rm.releaseRegister(ret_value); 	// return value not used
+		return null;
 	}
 
 	public Register methodCall(MethodSymbol sym, List<Expr> allArguments) {
@@ -61,65 +60,51 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 
 	// Emit vtable for arrays of this class:
 	@Override
-	public Register classDecl(ClassDecl ast, Void arg) {
-		if (!ast.name.equals("Main"))
-			throw new RuntimeException(
-					"Only expected one class, named 'main'");
+	public Register classDecl(ClassDecl ast, Context arg) {
+		// classes are not really relevant
+		// they are just functions with some context
 		return visitChildren(ast, arg);
 	}
 
+	/**
+	 * Emits method code.
+	 */
 	@Override
-	public Register methodDecl(MethodDecl ast, Void arg) {
-		// ------------------------------------------------------------
-		// Homework 1 Prologue Generation:
-		// Rather simplistic due to limited requirements!
-
-		if (!ast.name.equals("main"))
-			throw new RuntimeException(
-					"Only expected one method named 'main'");
-
-		// Emit some useful string constants:
-		cg.emit.emitRaw(Config.DATA_STR_SECTION);
-		cg.emit.emitLabel("STR_NL");
-		cg.emit.emitRaw(Config.DOT_STRING + " \"\\n\"");
-		cg.emit.emitLabel("STR_D");
-		cg.emit.emitRaw(Config.DOT_STRING + " \"%d\"");
-
-		// Emit a label for each variable:
-		// Let the AST Visitor do the iteration for us.
-		cg.emit.emitRaw(Config.DATA_INT_SECTION);
-		ast.decls().accept(new AstVisitor<Void, Void>() {
-			@Override
-			public Void varDecl(VarDecl ast, Void arg) {
-				if (!ast.type.equals("int"))
-					throw new RuntimeException(
-							"Only int variables expected");
-				cg.emit.emitLabel(AstCodeGenerator.VAR_PREFIX + ast.name);
-				cg.emit.emitConstantData("0");
-				return null;
-			}
-		}, null);
-
-		// Emit the main() method:
-		cg.emit.emitRaw(Config.TEXT_SECTION);
-		cg.emit.emitRaw(".globl " + MAIN);
-		cg.emit.emitLabel(MAIN);
-
-		cg.emit.emit("enter", "$8", "$0");
-		cg.emit.emit("and", -16, STACK_REG);
-		gen(ast.body());
-		cg.emitMethodSuffix(true);
+	public Register methodDecl(MethodDecl ast, Context arg) {
+		// each method starts with label
+		cg.emit.emitLabel(arg.getMethodLabel(ast.name));
+		
+		// enter method with size of local parameters.
+		int localsSize = ast.sym.locals.size() * Config.SIZEOF_PTR;
+		cg.emit.emit("enter", AssemblyEmitter.constant(localsSize), AssemblyEmitter.constant(0));
+		
+		// set method to context and emit locals on the stack.
+		arg.setMethod(ast, cg.emit);
+		
+		// save registers that should be saved by us.
+		BackendUtils.saveRegisters(cg.emit, Arrays.asList(RegisterManager.CALLEE_SAVE));
+		
+		// current offset is 8 for enter + return and length of saved registers.
+		arg.SP_offset = -1 * (localsSize + 8 + (RegisterManager.CALLEE_SAVE.length * Config.SIZEOF_PTR));
+		visit(ast.body(), arg);
+		
+		// restore registers and add to offset.
+		BackendUtils.restoreRegisters(cg.emit, Arrays.asList(RegisterManager.CALLEE_SAVE));
+		arg.SP_offset += RegisterManager.CALLEE_SAVE.length * Config.SIZEOF_PTR;
+		
+		// emit method suffix.
+		cg.emitMethodSuffix(ast.returnType.equals("void"));
 		return null;
 	}
 
 	@Override
-	public Register ifElse(IfElse ast, Void arg) {
+	public Register ifElse(IfElse ast, Context arg) {
 	
 		/*
 		 * Generate code for the evaluation of the expression
 		 * and a label to jump to if it evaluates to false.
 		 */
-		Register condition = cg.eg.gen(ast.condition());
+		Register condition = cg.eg.visit(ast.condition(), arg);
 		String otherwiseLabel = cg.emit.uniqueLabel();
 		
 		/*
@@ -128,11 +113,12 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 		 */
 		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), condition);
 		cg.emit.emit("je", otherwiseLabel);
+		cg.rm.releaseRegister(condition);
 		
 		/*
 		 * Generate code for the then-body.
 		 */
-		gen(ast.then());
+		visit(ast.then(), arg);
 		
 		/*
 		 * Determine whether ast is a if-then
@@ -151,7 +137,7 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 			 * Emit label and code for the else-part.
 			 */
 			cg.emit.emitLabel(otherwiseLabel);
-			gen(ast.otherwise());
+			visit(ast.otherwise(), arg);
 			
 			/*
 			 * Label for the (unconditional) jump taken after the then-body.
@@ -165,12 +151,11 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 			 */
 			cg.emit.emitLabel(otherwiseLabel);
 		}
-		
 		return null;
 	}
 
 	@Override
-	public Register whileLoop(WhileLoop ast, Void arg) {
+	public Register whileLoop(WhileLoop ast, Context arg) {
 		
 		/*
 		 * Generate labels needed.
@@ -187,7 +172,7 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 		 * Emit label and code for the body.
 		 */
 		cg.emit.emitLabel(bodyLabel);
-		gen(ast.body());
+		visit(ast.body(), arg);
 		
 		/*
 		 * Jump here when entering the loop for the first time.
@@ -197,7 +182,7 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 		/*
 		 * Generate code for the evaluation of the condition.
 		 */
-		Register condition = cg.eg.gen(ast.condition());
+		Register condition = cg.eg.visit(ast.condition(), arg);
 		
 		/*
 		 * Test whether the condition is non-zero (true)
@@ -205,44 +190,66 @@ class StmtGenerator extends AstVisitor<Register, Void> {
 		 */
 		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), condition);
 		cg.emit.emit("jne", bodyLabel);
-		
+		cg.rm.releaseRegister(condition);
 		return null;
 	}
 
 	@Override
-	public Register assign(Assign ast, Void arg) {
-		if (!(ast.left() instanceof Var))
-			throw new RuntimeException("LHS must be var in HW1");
-		Var var = (Var) ast.left();
-		Register rhsReg = cg.eg.gen(ast.right());
-		cg.emit.emit("movl", rhsReg, AstCodeGenerator.VAR_PREFIX + var.name);
-		cg.rm.releaseRegister(rhsReg);
+	public Register assign(Assign ast, Context arg) {
+		// left hand side requires to be pointer to memory.
+		arg.returnValue = false;
+		Register left = cg.eg.visit(ast.left(), arg);
+		// right hand side has to be a value.
+		arg.returnValue = true;
+		Register right = cg.eg.visit(ast.right(), arg);
+		// store to the left register and release both of them.
+		cg.emit.emitStore(right, 0, left);
+		cg.rm.releaseRegister(left);
+		cg.rm.releaseRegister(right);
 		return null;
 	}
 
+	/**
+	 * Emits write of integer to the console.
+	 */
 	@Override
-	public Register builtInWrite(BuiltInWrite ast, Void arg) {
-		Register reg = cg.eg.gen(ast.arg());
-		cg.emit.emit("sub", constant(16), STACK_REG);
-		cg.emit.emitStore(reg, 4, STACK_REG);
-		cg.emit.emitStore("$STR_D", 0, STACK_REG);
+	public Register builtInWrite(BuiltInWrite ast, Context arg) {
+		// push arguments needed on the stack, call printf and pop them
+		Register reg = cg.eg.visit(ast.arg(), arg);
+		List<String> arguments = Arrays.asList("$STR_D", reg.repr);
+		BackendUtils.pushArguments(cg.emit, arguments, arg.SP_offset);
 		cg.emit.emit("call", Config.PRINTF);
-		cg.emit.emit("add", constant(16), STACK_REG);
+		BackendUtils.popArguments(cg.emit, arguments, arg.SP_offset);
 		cg.rm.releaseRegister(reg);
 		return null;
 	}
 
+	/**
+	 * Emits write line statement.
+	 */
 	@Override
-	public Register builtInWriteln(BuiltInWriteln ast, Void arg) {
-		cg.emit.emit("sub", constant(16), STACK_REG);
-		cg.emit.emitStore("$STR_NL", 0, STACK_REG);
+	public Register builtInWriteln(BuiltInWriteln ast, Context arg) {
+		// push arguments needed on the stack, call printf and pop them
+		List<String> arguments = Arrays.asList("$STR_NL");
+		BackendUtils.pushArguments(cg.emit, arguments, arg.SP_offset);
 		cg.emit.emit("call", Config.PRINTF);
-		cg.emit.emit("add", constant(16), STACK_REG);
+		BackendUtils.popArguments(cg.emit, arguments, arg.SP_offset);
 		return null;
 	}
 
+	/**
+	 * Emits return from the method.
+	 */
 	@Override
-	public Register returnStmt(ReturnStmt ast, Void arg) {
-		throw new ToDoException();
+	public Register returnStmt(ReturnStmt ast, Context arg) {
+		// if there is an expression in if process it first
+		if(ast.arg() != null) {
+			Register ret = cg.eg.visit(ast.arg(), arg);
+			cg.emit.emitMove(ret, Register.EAX);
+			cg.rm.releaseRegister(ret);
+		}
+		// emit ret and leave in asm
+		cg.emitMethodSuffix(ast.arg() == null);
+		return null;	
 	}
 }
