@@ -3,10 +3,21 @@
 # VTable for Object
 vtable_Object:
 .long 0
+# VTable for Object array
+v_arr_table_Object:
+.long vtable_Object
 # VTable for Main
 vtable_Main:
 .long 0
 .long func_Main_main
+# VTable for Main array
+v_arr_table_Main:
+.long vtable_Object
+# VTables for primitive arrays:
+v_arr_table_int:
+.long vtable_Object
+v_arr_table_boolean:
+.long vtable_Object
 .cstring
 STR_NL:
 .asciz "\n"

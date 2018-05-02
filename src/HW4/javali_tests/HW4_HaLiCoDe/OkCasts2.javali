@@ -1,0 +1,30 @@
+/* We are trying to test valid casts */
+
+class A {
+	int field1;
+}
+
+class B extends A {
+	int field2;
+}
+
+class C extends B {
+	int field3;
+}
+
+class D extends C {
+	int field4;
+}
+
+class Main {
+	void main() {
+		Object a1;
+		B[] b1;
+		Object c1;
+		D[] d1;
+		a1 = new B[5];
+		b1 = (B[])a1;
+		c1 = new D[4];
+		d1 = (D[])c1;
+	}
+}

@@ -1,0 +1,22 @@
+/* Trying to tests array creation and manipulation */
+
+class Main {
+	void main() {
+		int i;
+		int[] arr;
+		arr = new int[10];
+		i = 0;
+		arr[1] = 2;
+		while(i < 10) {
+			arr[i] = i * 10 + 2;
+			i = i + 1;
+		}
+
+		i = 0;
+		while(i < 10) {
+			write(arr[i]);
+			writeln();
+			i = i + 1;
+		}
+	}
+}

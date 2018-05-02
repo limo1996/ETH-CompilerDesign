@@ -1,0 +1,31 @@
+/* Trying to tests array creation and manipulation */
+
+class A {
+	int field1;
+}
+
+class B {
+	A[] arr;
+}
+
+class Main {
+	void main() {
+		int i;
+		B bb;
+		bb = new B();
+		bb.arr = new A[10];
+		i = 0;
+		while(i < 10) {
+			bb.arr[i] = new A();
+			bb.arr[i].field1 = i * 10 + 2;
+			i = i + 1;
+		}
+
+		i = 0;
+		while(i < 10) {
+			write(bb.arr[i].field1);
+			writeln();
+			i = i + 1;
+		}
+	}
+}

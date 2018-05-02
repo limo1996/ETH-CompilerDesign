@@ -1,0 +1,19 @@
+/* Test simple array creation */
+
+class A {
+	int field1;
+	int field2;
+}
+
+class Main {
+	void main() {
+		int[] a;
+		A[] aa;
+		
+		a = new int[5];
+		a = new int[10];
+
+		aa = new A[10];
+		aa = new A[14 * 9 - 50 + 2];
+	}
+}

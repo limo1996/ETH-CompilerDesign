@@ -1,0 +1,17 @@
+/* We are trying to do null cast error */
+
+class A {
+	int field;
+}
+
+class B extends A {
+	int field2;
+}
+
+class Main {
+	void main() {
+		A a1;
+		B b1;
+		b1 = (B)a1;
+	}
+}
