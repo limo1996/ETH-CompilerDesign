@@ -1,0 +1,15 @@
+class Main {
+	void main() {
+		int i1, i2, i3;
+		i1 = read();
+		write(i1);
+		i2 = read();
+		write(i2);
+		i3 = read();
+		write(i3);
+		i1 = read();
+		write(i1);
+		write(i2);
+		writeln();
+	}
+}

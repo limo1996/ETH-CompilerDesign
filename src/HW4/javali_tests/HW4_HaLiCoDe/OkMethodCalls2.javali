@@ -1,0 +1,17 @@
+/* We are trying to test simple method calls - good start for our compiler */
+class Main {
+	void main() {
+		int i1;
+		i1 = 1;
+		i1 = foo(i1, 2);
+		write(i1);
+		writeln();
+	}
+
+	int foo(int a1, int a2) {
+		int a11, a22;
+		a11 = read();
+		a22 = read();
+		return (a1 - a2) * (a11 + a22); 
+	}
+}

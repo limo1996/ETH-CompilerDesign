@@ -1,0 +1,28 @@
+/* We are trying to test simple method calls - good start for our compiler */
+class Main {
+	void main() {
+		int i1;
+		i1 = 1;
+		i1 = foo(/*i1, 2*/);
+		write(i1);
+		writeln();
+	}
+
+	int foo(int a1, int a2) {
+		int a11, a22;
+		a11 = read();
+		a22 = read();
+		return (a1 - a2) * (a11 + a22) * foo2(1, 2, 3, true) * foo2(3, 2, 1, false); 
+	}
+
+	int foo2(int a1, int a2, int a3, boolean bb) {
+		int i1, i2;
+		i1 = read();
+		if(bb) {
+			i2 = 4 * i1 + 3 * a1 - 2 * a2 + a3;
+		} else {
+			i2 = 5 * i1 + 4 * a1 - 3 * a2 + 2 * a3;
+		}
+		return i2;
+	}
+}
