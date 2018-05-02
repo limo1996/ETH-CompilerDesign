@@ -24,7 +24,18 @@ public class BackendUtils {
 	
 	// returns vtable label
 	public static String getVTableLabel(String c_name) {
+		int index = c_name.indexOf("[]");
+		if(index != -1)
+			c_name = c_name.substring(0, index);
 		return "vtable_" + c_name;
+	}
+	
+	// returns vtable label for array
+	public static String getVTableArrayLabel(String c_name) {
+		int index = c_name.indexOf("[]");
+		if(index != -1)
+			c_name = c_name.substring(0, index);
+		return "v_arr_table_" + c_name;
 	}
 	
 	// pushes given registers onto the stack
@@ -57,6 +68,7 @@ public class BackendUtils {
 	// returns offset that should be substracted from stack pointer
 	public static int allocSpaceSize(int offset, int argsCount) {
 		// we need to have 16 bite alignment otherwise we got seg faults  
+		// this is not my idea, it was found in assembly offsets tutorial
 		int argSpace = argsCount * Config.SIZEOF_PTR;
 		return (offset - argSpace) % 16 + 16 + argSpace;
 	}

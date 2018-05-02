@@ -67,6 +67,13 @@ public class VTable {
 			emit.emitConstantData(label);
 		}
 	}
+	
+	// emits array of this type
+	public void emitArray(AssemblyEmitter emit) {
+		emit.emitComment("VTable for " + this.name + " array");
+		emit.emitLabel(BackendUtils.getVTableArrayLabel(name));
+		emit.emitConstantData(BackendUtils.getVTableLabel("Object"));
+	}
 		
 	// name
 	public String name() {

@@ -137,6 +137,14 @@ public class AstCodeGenerator {
 				processed.add(curr);
 			}
 		}
+		
+		// emit vtables for arrays
+		emit.emitComment("VTables for primitive arrays:");
+		emit.emitLabel(BackendUtils.getVTableArrayLabel("int"));
+		emit.emitConstantData(BackendUtils.getVTableLabel("Object"));
+		
+		emit.emitLabel(BackendUtils.getVTableArrayLabel("boolean"));
+		emit.emitConstantData(BackendUtils.getVTableLabel("Object"));
 	}
 	
 	private void emitTables(ClassSymbol sym) {
@@ -146,6 +154,8 @@ public class AstCodeGenerator {
 		sym.v_table = new VTable(sym);
 		// emit VTable
 		sym.v_table.emit(emit);
+		// emit Array Table
+		sym.v_table.emitArray(emit);
 	}
 	
 	private void emitPrologue(ClassDecl main) {

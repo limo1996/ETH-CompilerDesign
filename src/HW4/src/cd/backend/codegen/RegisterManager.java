@@ -98,13 +98,16 @@ public class RegisterManager {
 			throw new AssemblyFailedException(
 					"Program requires too many registers");
 
-		return registers.remove(last);
+		Register r = registers.remove(last);
+		assert r != null;
+		return r;
 	}
 
 	/**
 	 * marks a currently used register as free
 	 */
 	public void releaseRegister(Register reg) {
+		assert reg != null;
 		assert !registers.contains(reg);
 		registers.add(reg);
 	}
