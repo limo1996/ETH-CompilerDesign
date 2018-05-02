@@ -436,6 +436,7 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	@Override
 	public Register field(Field ast, Context arg) {
 		ClassSymbol sym = (ClassSymbol)ast.arg().type;
+		boolean old_ret = arg.returnValue;
 		int offset = -1;
 		ClassSymbol curr = sym;
 		while (offset == -1 && curr != ClassSymbol.objectType) {
@@ -443,7 +444,6 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 			curr = curr.superClass;
 		}
 		
-		boolean old_ret = arg.returnValue;
 		arg.returnValue = true;
 		
 		System.out.println(ast.arg().getClass());
@@ -659,7 +659,7 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	public Register var(Var ast, Context arg) {
 		Register reg = cg.rm.getRegister();
 		int offset = arg.getOffset(ast.sym.name);
-		System.out.println("Offset of: " + ast.sym.name + " : " + offset + " by value : " + arg.returnValue);
+		//System.out.println("Offset of: " + ast.sym.name + " : " + offset + " by value : " + arg.returnValue);
 		String op = arg.returnValue ? "movl" : "leal";
 		cg.emit.emit(op, AssemblyEmitter.registerOffset(offset, Register.EBP), reg);
 		return reg;

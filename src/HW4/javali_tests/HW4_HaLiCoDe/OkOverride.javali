@@ -1,0 +1,24 @@
+/* test simple override */
+
+class A {
+	void foo() {
+		write(1);
+		writeln();
+	}
+}
+
+class B extends A {
+	void foo() {
+		write(2);
+		writeln();
+	}
+}
+
+class Main {
+	void main() {
+		A aa;
+		aa = new B();
+		aa.foo();
+	}
+}
+

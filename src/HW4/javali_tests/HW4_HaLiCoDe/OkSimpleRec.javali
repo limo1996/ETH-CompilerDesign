@@ -1,0 +1,16 @@
+/* Trying to test simple recursion */
+
+class Main {
+	void main() {
+		write(factorial(5));
+		write(factorial(10));
+	}
+
+	int factorial(int k) {
+		if(k > 1) {
+			return factorial(k - 1) * k;
+		} else {
+			return 1;
+		}
+	}
+}

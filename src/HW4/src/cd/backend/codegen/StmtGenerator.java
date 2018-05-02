@@ -53,8 +53,10 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 		Register ret_value = cg.eg.visit(ast.getMethodCallExpr(), arg);
 		if(!ast.getMethodCallExpr().type.equals(PrimitiveTypeSymbol.voidType)) {
 			assert ret_value != null;
-			cg.rm.releaseRegister(ret_value); 	// return value not used
+			 	// return value not used
 		}
+		if(ret_value != null)
+			cg.rm.releaseRegister(ret_value);
 		return null;
 	}
 
