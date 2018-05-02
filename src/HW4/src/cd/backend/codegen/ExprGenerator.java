@@ -28,6 +28,7 @@ import cd.ir.Ast.ThisRef;
 import cd.ir.Ast.UnaryOp;
 import cd.ir.Ast.Var;
 import cd.ir.ExprVisitor;
+import cd.ir.Symbol.ClassSymbol;
 import cd.util.debug.AstOneLine;
 
 /**
@@ -58,11 +59,13 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	
 	@Override
 	public Register binaryOp(BinaryOp ast, Context arg) {
-	
+		arg.returnValue = true;
 		boolean store;
 		Register leftReg, rightReg;
+		
 		int leftRN = cg.rnv.calc(ast.left());
 		int rightRN = cg.rnv.calc(ast.right());
+		int available = cg.rm.availableRegisters();
 		
 		if (leftRN > rightRN) {
 			
@@ -70,7 +73,7 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 			 * Determine whether the intermediate result will have to be stored
 			 * on the stack because the test of the computation uses all registers.
 			 */
-			store = rightRN >= RegisterManager.GPR.length;
+			store = rightRN >= available;
 			
 			/*
 			 * Generate code for the LHS expression.
@@ -104,8 +107,8 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 			 * Determine whether the intermediate result will have to be stored
 			 * on the stack because the test of the computation uses all registers.
 			 */
-			store = leftRN >= RegisterManager.GPR.length;
-			
+			store = leftRN >= available;
+
 			/*
 			 * Generate code for the RHS expression.
 			 */
@@ -253,13 +256,13 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	public Register builtInRead(BuiltInRead ast, Context arg) {
 		Register reg = cg.rm.getRegister();
 		int offset = BackendUtils.allocSpaceSize(arg.SP_offset, 2);
-		cg.emit.emit("sub", constant(offset), STACK_REG);
+		cg.emit.emit("subl", constant(offset), STACK_REG);
 		cg.emit.emit("leal", AssemblyEmitter.registerOffset(8, STACK_REG), reg);
 		cg.emit.emitStore(reg, 4, STACK_REG);
 		cg.emit.emitStore("$STR_D", 0, STACK_REG);
 		cg.emit.emit("call", SCANF);
 		cg.emit.emitLoad(8, STACK_REG, reg);
-		cg.emit.emit("add", constant(offset), STACK_REG);
+		cg.emit.emit("addl", constant(offset), STACK_REG);
 		return reg;
 	}
 
@@ -270,7 +273,7 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register index(Index ast, Context arg) {
-		
+		arg.returnValue = true;
 		boolean store;
 		Register leftReg, rightReg;
 		int leftRN = cg.rnv.calc(ast.left());
@@ -368,7 +371,30 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register field(Field ast, Context arg) {
-		throw new ToDoException();	
+		ClassSymbol sym = (ClassSymbol)ast.arg().type;
+		int offset = -1;
+		ClassSymbol curr = sym;
+		while (offset == -1 && curr != ClassSymbol.objectType) {
+			offset = sym.o_table.offsetOf(curr.name + "." + ast.fieldName);
+			curr = curr.superClass;
+		}
+		
+		boolean old_ret = arg.returnValue;
+		arg.returnValue = true;
+		Register reg = visit(ast.arg(), arg);
+		String labelOk = cg.emit.uniqueLabel();
+
+		cg.emit.emit("cmp", constant(0), reg);
+		cg.emit.emit("jne", labelOk);
+
+		BackendUtils.emitExit(cg.emit, ExitCode.NULL_POINTER, arg.SP_offset);
+
+		cg.emit.emitLabel(labelOk);
+
+		String op = old_ret ? "movl" : "leal";
+		cg.emit.emit(op, AssemblyEmitter.registerOffset(offset, reg), reg);
+		return reg;
+		
 	}
 
 	@Override
@@ -440,7 +466,26 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register newObject(NewObject ast, Context arg) {
-		throw new ToDoException();
+		BackendUtils.saveRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
+		arg.SP_offset -= RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		
+		ClassSymbol symbol = (ClassSymbol)ast.type;
+		List<String> args = Arrays.asList(AssemblyEmitter.constant(BackendUtils.size(symbol)),
+										  AssemblyEmitter.constant(Config.SIZEOF_PTR));
+		
+		BackendUtils.pushArguments(cg.emit, args, arg.SP_offset);
+		Register new_ref = cg.rm.getRegister();
+		cg.emit.emit("call", Config.CALLOC);
+		cg.emit.emitMove(Register.EAX, new_ref);
+		
+		cg.emit.emit("leal", symbol.v_table.name(), Register.EAX);
+		cg.emit.emitStore(Register.EAX, 0, new_ref);
+		
+		BackendUtils.popArguments(cg.emit, args, arg.SP_offset);
+		BackendUtils.restoreRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
+		arg.SP_offset += RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		
+		return new_ref;
 	}
 
 	@Override
@@ -496,7 +541,8 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 		}
 		
 		// find method in memory
-		int method_offset = arg.getVTable().methodOffset(ast.methodName);
+		ClassSymbol receiver = (ClassSymbol)ast.receiver().type;
+		int method_offset = receiver.v_table.methodOffset(ast.methodName);
 		caller = cg.rm.getRegister();
 		cg.emit.emitLoad(0, Register.ESP, caller);
 		cg.emit.emitLoad(0, caller, caller);
@@ -522,6 +568,7 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register unaryOp(UnaryOp ast, Context arg) {
+		arg.returnValue = true;
 		Register argReg = visit(ast.arg(), arg);
 		switch (ast.operator) {
 		case U_PLUS:

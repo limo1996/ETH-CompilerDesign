@@ -12,7 +12,11 @@ import java.util.Stack;
 import cd.Config;
 import cd.Main;
 import cd.backend.codegen.RegisterManager.Register;
+import cd.ir.Ast;
 import cd.ir.Ast.ClassDecl;
+import cd.ir.Ast.Var;
+import cd.ir.AstRewriteVisitor;
+import cd.ir.AstVisitor;
 import cd.ir.Symbol;
 import cd.ir.Symbol.ClassSymbol;
 
@@ -65,6 +69,32 @@ public class AstCodeGenerator {
 	 * </ol>
 	 */
 	public void go(List<? extends ClassDecl> astRoots) {
+		// convert vars to fields if they are
+		for(ClassDecl ast: astRoots) {
+			ast.accept(new AstRewriteVisitor<ClassDecl>() {
+				@Override
+				public Ast classDecl(ClassDecl ast, ClassDecl arg) {
+					return visitChildren(ast, ast);
+				}
+
+				@Override
+				public Ast var(Var ast, ClassDecl arg) {
+					switch (ast.sym.kind) {
+						case PARAM :
+						case LOCAL :
+							return ast;
+						case FIELD :
+							Ast.ThisRef thisRef = new Ast.ThisRef();
+							thisRef.type = arg.sym;
+							Ast.Field f = new Ast.Field(thisRef, ast.name);
+							f.type = ast.type;
+							f.sym = ast.sym;
+							return f;
+					}
+					throw new RuntimeException("Unknown kind of var");
+				}
+			}, null);
+		}
 		// emit VTables
 		emitVTables(astRoots);
 		// find main and emit prologue

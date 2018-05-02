@@ -73,11 +73,6 @@ public class VTable {
 		return BackendUtils.getVTableLabel(name);
 	}
 	
-	// vtable's asm name
-	public String vname() {
-		return BackendUtils.getVTableLabel(name);
-	}
-	
 	// returns methos offset
 	public int methodOffset(String name) {
 		return methods.get(name).offset * Config.SIZEOF_PTR;

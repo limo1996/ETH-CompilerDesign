@@ -43,6 +43,7 @@ public class Context {
 	 */
 	public void setMethod(MethodDecl methodDecl, AssemblyEmitter emit) {
 		this._method = methodDecl;
+		this.returnValue = true;
 		this.offsets = new HashMap<String, Integer>();
 		
 		int offset = 2 * Config.SIZEOF_PTR;

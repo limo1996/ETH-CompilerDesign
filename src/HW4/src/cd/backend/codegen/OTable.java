@@ -34,7 +34,6 @@ public class OTable {
 	 */
 	public int offsetOf(String field) {
 		int index = offsets.indexOf(field);
-		assert(index >= 0);
 		return index * Config.SIZEOF_PTR;
 	}
 	

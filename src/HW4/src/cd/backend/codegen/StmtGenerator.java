@@ -21,6 +21,7 @@ import cd.ir.Ast.ReturnStmt;
 import cd.ir.Ast.WhileLoop;
 import cd.ir.AstVisitor;
 import cd.ir.Symbol.MethodSymbol;
+import cd.ir.Symbol.PrimitiveTypeSymbol;
 import cd.util.debug.AstOneLine;
 
 /**
@@ -49,9 +50,11 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 
 	@Override
 	public Register methodCall(MethodCall ast, Context arg) {
-		Register ret_value = ast.getMethodCallExpr().accept(this, arg);
-		assert ret_value != null;
-		cg.rm.releaseRegister(ret_value); 	// return value not used
+		Register ret_value = cg.eg.visit(ast.getMethodCallExpr(), arg);
+		if(!ast.getMethodCallExpr().type.equals(PrimitiveTypeSymbol.voidType)) {
+			assert ret_value != null;
+			cg.rm.releaseRegister(ret_value); 	// return value not used
+		}
 		return null;
 	}
 
