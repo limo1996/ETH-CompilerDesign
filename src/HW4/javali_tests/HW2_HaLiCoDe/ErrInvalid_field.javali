@@ -1,0 +1,6 @@
+int a;
+
+class Main() {
+	void main() {
+	}
+}

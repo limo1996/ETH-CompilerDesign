@@ -1,0 +1,5 @@
+// checks for double method declaration
+class Main {
+	void main () {}
+	void main () {}
+}

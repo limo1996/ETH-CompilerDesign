@@ -1,0 +1,15 @@
+// OK inheritance but complicated
+
+class Main {
+	void main () {}
+}
+
+class A {}
+class B extends A {}
+class C extends B {}
+class D extends C {}
+class E extends B {}
+class F extends A {}
+class G extends C {}
+class H extends F {}
+class I extends F {}

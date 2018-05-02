@@ -1,0 +1,13 @@
+// Test INVALID_START_POINT failure.
+
+class noreturn {
+	boolean field;
+	
+	int badmethod(boolean arg) {
+		if(field) {
+			if(arg) {
+				return 1+2;
+			}	
+		}
+	}
+}

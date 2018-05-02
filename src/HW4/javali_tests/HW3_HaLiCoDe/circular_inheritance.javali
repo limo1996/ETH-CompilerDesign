@@ -1,0 +1,19 @@
+// Test CIRCULAR_INHERITANCE failure.
+
+class Main {
+	void main() {
+	
+	}
+}
+
+class testclass1 extends testclass3 {
+
+}
+
+class testclass2 extends testclass1 {
+
+}
+
+class testclass3 extends testclass2 {
+
+}

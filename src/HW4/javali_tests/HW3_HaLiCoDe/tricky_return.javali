@@ -1,0 +1,12 @@
+/* Testing missing return detection */
+
+class Main {
+	void main() {
+		int i0, i1;
+		return i0;
+	}
+
+	int getInt() {
+		return true;
+	}
+}

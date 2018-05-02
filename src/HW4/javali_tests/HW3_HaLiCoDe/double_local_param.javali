@@ -1,0 +1,8 @@
+// checks for double declaration of local var and func. parameter
+
+class Main {
+	void main () {}
+	void func (int a){
+		boolean a;
+	}
+}

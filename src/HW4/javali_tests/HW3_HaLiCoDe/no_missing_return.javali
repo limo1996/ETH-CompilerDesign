@@ -1,0 +1,24 @@
+// Test MISSING_RETURN failure.
+
+class Main {
+	void main() {
+	}
+}
+
+class yesreturn {
+	boolean field;
+	
+	int badmethod(boolean arg) {
+		if(field) {
+			if(arg) {
+				return 1+2;
+			}
+			else {
+				return 4;
+			}	
+		}
+		else {
+			return 12;
+		}
+	}
+}

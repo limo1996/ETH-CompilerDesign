@@ -1,0 +1,18 @@
+// Test NO_SUCH_TYPE failure.
+
+class Main {
+	void main() {
+	}
+}
+
+class testclass {
+	notype field;
+	
+	int method(boolean arg) {
+		if(field) {
+			if(arg) {
+				return 1+2;
+			}	
+		}
+	}
+}

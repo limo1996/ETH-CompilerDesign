@@ -1,0 +1,13 @@
+// Test TYPE_ERROR failure.
+
+class Main {
+	void main() {
+		Main a;
+		Maine b;
+		b = a;
+	}
+}
+
+class Maine extends Main{
+
+}

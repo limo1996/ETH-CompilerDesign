@@ -1,0 +1,126 @@
+// Trying to tests big parse tree
+
+class Main {
+    int func(int a) {
+        // comment: return statement
+        return arg + 1;
+    }
+
+    // primitive type declarations
+    int k0, k299028_1;
+    boolean b0;
+
+    void main() {
+    }
+
+    // reference type declarations
+    Array l0, l1, l2;
+    int[] i2;
+    boolean[] b1, b2;
+    list[] l3;
+
+    Array method(boolean a, point[] b) {
+        i0 = true;
+        i1 = null;
+        i2 = 0x45;
+    }
+
+    int[] ffgh(boolean[] a) {
+    }
+
+    int[] main() {
+        int i0, i1, i2;
+
+        // assignments
+        i0 = 0;
+        i1 = i0 + 1;
+        i2 = read();
+        i3 = new m();
+        i4 = new boolean[m() + m1()];
+        i5 = new Pts[2 - i2 + 0];
+
+        // methodCall statements
+        func(i4, i5);
+        Array.fgh();
+
+
+
+        if (i0 <= i0) {
+            writeln();
+        } else {
+            i0 = (i0 * i0) + i1;
+        }
+	while(true){
+	        // if statement
+        	if (true) {
+            		i0 = 300;
+            		i1 = (point) i0;
+        	}
+	}
+
+        if (this.array[1000].foo(2).random.field % 10 >= 98) {
+            return -1;
+        } else {
+            lol().lolo();
+        }
+
+        // while loop
+        while (i4 * 7 <= 200) {
+            i7 = i1111110 - 98394;
+        }
+
+        // write statement
+        write(i0);
+        writeln();
+
+
+    }
+}
+
+class Array {
+    boolean foo() {
+    }
+
+    // primitive type declarations
+    int i0, i1;
+    boolean b0;
+
+    void main() {
+    }
+
+    // reference type declarations
+    Array k992, ke, lfff;
+    booelan[] bools;
+    int[] ints
+    list[] l3;
+
+    void foo(int a, Pts[] b) {
+        i0 = true;
+        i12 = 0X9092;
+        i2 = null;
+    }
+
+    int[] foo2(boolean[] a) {
+        // identAccess to the left of an assignment
+        int ijk0, ibsh210, k9090909090;
+        i0 = read();
+        this = new Pts[i0];
+        this.i1 = 78723;
+        array[i0] = true;
+        i2.f() = false;
+        g() = null;
+        g(100 * io / 89).y = 0x235;
+
+        // identAccess as an expression (including methodCall expressions)
+        kki4 = this;
+        lki5 = ccc.foo;
+        iwe6 = this.Array[i4];
+        iwe7 = f(i2 - i3);
+        iewe8 = il1.foo2();
+
+        // deep nesting
+        i10 = this.method(this.method(this.array[i0]));
+        i101000 = i0.i2.i120.complex.array[2].i0.method(this.i0);
+        return this.array[this.array[this.array[this.array[this.array[this.foo2(90 * 90 * 100 * 67 * i2)]]]]];
+    }
+}

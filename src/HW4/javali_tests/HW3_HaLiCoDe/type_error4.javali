@@ -1,0 +1,7 @@
+// Test TYPE_ERROR 	failure.
+
+class Main {
+	void main() {
+		return true;
+	}
+}

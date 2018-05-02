@@ -1,0 +1,18 @@
+// Test MISSING_RETURN failure.
+
+class Main {
+	void main() {
+	}
+}
+
+class noreturn {
+	boolean field;
+	
+	int badmethod(boolean arg) {
+		if(field) {
+			if(arg) {
+				return 1+2;
+			}	
+		}
+	}
+}

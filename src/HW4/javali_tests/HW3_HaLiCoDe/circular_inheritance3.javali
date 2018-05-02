@@ -1,0 +1,9 @@
+// checks for another tricky circular inheritance
+class Main {
+    void main() {}
+}
+
+class A extends D {}
+class B extends A {}
+class C extends A {}
+class D extends C {}

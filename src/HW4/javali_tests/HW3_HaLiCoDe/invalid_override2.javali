@@ -1,0 +1,22 @@
+// Test INVALID_OVERRIDE failure. -> num of parameters
+
+class Main {
+	void main() {
+	
+	}
+}
+
+class testclass{
+	int testfield1;
+	boolean testfield2;
+	testclass testfield3;
+	
+	void testmethod(boolean testarg, int a) {
+	}
+}
+
+class testclass2 extends testclass {
+	
+	void testmethod(){
+	}
+}

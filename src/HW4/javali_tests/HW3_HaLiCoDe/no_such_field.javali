@@ -1,0 +1,8 @@
+// Test NO_SUCH_FIELD failure.
+
+class Main {
+	void main() {
+		Main a;
+		write(a.b);
+	}
+}

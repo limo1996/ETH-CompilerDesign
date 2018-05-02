@@ -1,0 +1,8 @@
+// checks for double declaration of local variable
+
+class Main {
+	void main () {
+		int tmp;
+		boolean tmp;
+	}
+}

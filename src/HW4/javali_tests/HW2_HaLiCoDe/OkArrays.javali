@@ -1,0 +1,31 @@
+/* In this test we are going to test arrays */
+
+class Obj{
+	int[] arr;
+}
+
+class Main {
+	Obj[] objs;
+	void main() {
+		boolean[] truths;
+		int[] ints;
+		int i0, i1, i2;
+		i0 = 0;
+		ints = new int[10];
+		while(i0 < 10){
+			ints[i0] = i0;
+			i0 = i0 + 1;
+		}
+			
+		truths = new boolean[ints[9]];
+		i1 = 0;
+		while(i1 < ints[7]){
+			truths[i1] = i1 % 2 == 0;
+			i1 = i1 + 1;
+		}
+
+		if(this.objs[1].arr[2] == 2){
+			println(this.objs[0].arr[1]);
+		}
+		return;
+}
