@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import cd.backend.codegen.RegisterManager.Register;
+
 /**
  * Simple class that manages the set of currently used
  * and unused registers

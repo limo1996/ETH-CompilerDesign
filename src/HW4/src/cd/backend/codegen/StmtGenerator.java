@@ -50,6 +50,7 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 	@Override
 	public Register methodCall(MethodCall ast, Context arg) {
 		Register ret_value = ast.getMethodCallExpr().accept(this, arg);
+		assert ret_value != null;
 		cg.rm.releaseRegister(ret_value); 	// return value not used
 		return null;
 	}
@@ -249,7 +250,7 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 			cg.rm.releaseRegister(ret);
 		}
 		// emit ret and leave in asm
-		cg.emitMethodSuffix(ast.arg() == null);
+		//cg.emitMethodSuffix(ast.arg() == null);
 		return null;	
 	}
 }

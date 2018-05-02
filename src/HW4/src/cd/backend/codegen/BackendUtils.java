@@ -1,8 +1,10 @@
 package cd.backend.codegen;
 
+import java.util.Arrays;
 import java.util.List;
 
 import cd.Config;
+import cd.backend.ExitCode;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast.ClassDecl;
 import cd.ir.Symbol.ClassSymbol;
@@ -74,5 +76,11 @@ public class BackendUtils {
 	// returns size of object in memory
 	public static int size(ClassSymbol decl) {
 		return decl.o_table.size();
+	}
+	
+	public static void emitExit(AssemblyEmitter emit, ExitCode eo, int offset) {
+		List<String> args = Arrays.asList(AssemblyEmitter.constant(eo.value));
+		pushArguments(emit, args, offset);
+		emit.emit("call", Config.EXIT);
 	}
 }

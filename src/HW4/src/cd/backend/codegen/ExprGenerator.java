@@ -9,6 +9,7 @@ import java.util.List;
 
 import cd.Config;
 import cd.ToDoException;
+import cd.backend.ExitCode;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast;
 import cd.ir.Ast.BinaryOp;
@@ -55,75 +56,78 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	}
 	
-	/*
-	 * Compares the contents of leftReg and rightReg and sets leftReg according
-	 * to whether they are members of the relation
-	 * (op is the corresponding assembly jump instruction).
-	 * 
-	 * This method is needed because the SETcc (conditional set) instruction
-	 * works only on byte registers and a reasonable alternative has no been found. 
-	 */
-	public void relationalOperator(String op, Register leftReg, Register rightReg) {
-		
-		String trueLabel = cg.emit.uniqueLabel();
-		String falseLabel = cg.emit.uniqueLabel();
-		
-		cg.emit.emit("cmpl", rightReg, leftReg);
-		cg.emit.emit(op, trueLabel);
-		cg.emit.emitMove(AssemblyEmitter.constant(0), leftReg);
-		cg.emit.emit("jmp", falseLabel);
-		cg.emit.emitLabel(trueLabel);
-		cg.emit.emitMove(AssemblyEmitter.constant(1), leftReg);
-		cg.emit.emitLabel(falseLabel);
-	}
-	
 	@Override
 	public Register binaryOp(BinaryOp ast, Context arg) {
 	
+		boolean store;
+		Register leftReg, rightReg;
 		int leftRN = cg.rnv.calc(ast.left());
 		int rightRN = cg.rnv.calc(ast.right());
-
-		Register leftReg, rightReg;
+		
 		if (leftRN > rightRN) {
 			
+			/*
+			 * Determine whether the intermediate result will have to be stored
+			 * on the stack because the test of the computation uses all registers.
+			 */
+			store = rightRN >= RegisterManager.GPR.length;
+			
+			/*
+			 * Generate code for the LHS expression.
+			 */
 			leftReg = visit(ast.left(), arg);
 			
 			/*
 			 * Store LHS on the stack if needed.
 			 */
-			if(rightRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				cg.emit.emit("pushl", leftReg);
 				cg.rm.releaseRegister(leftReg);
 			}
 			
+			/*
+			 * Generate code for the RHS expression.
+			 */
 			rightReg = visit(ast.right(), arg);
 			
 			/*
 			 *  Reload LHS from the stack if needed.
 			 */
-			if(rightRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				leftReg = cg.rm.getRegister();
 				cg.emit.emit("popl", leftReg);
 			}
 			
 		} else {
 			
+			/*
+			 * Determine whether the intermediate result will have to be stored
+			 * on the stack because the test of the computation uses all registers.
+			 */
+			store = leftRN >= RegisterManager.GPR.length;
+			
+			/*
+			 * Generate code for the RHS expression.
+			 */
 			rightReg = visit(ast.right(), arg);
 			
 			/*
 			 * Store RHS on the stack if needed.
 			 */
-			if(leftRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				cg.emit.emit("pushl", rightReg);
 				cg.rm.releaseRegister(rightReg);
 			}
 			
+			/*
+			 * Generate code for the LHS expression.
+			 */
 			leftReg = visit(ast.left(), arg);
 			
 			/*
 			 *  Reload RHS from the stack if needed.
 			 */
-			if(leftRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				rightReg = cg.rm.getRegister();
 				cg.emit.emit("popl", rightReg);
 			}
@@ -153,7 +157,8 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 			String legalLabel = cg.emit.uniqueLabel();
 			cg.emit.emit("cmpl", AssemblyEmitter.constant(0), rightReg);
 			cg.emit.emit("jne", legalLabel);
-			cg.emit.emit("pushl", AssemblyEmitter.constant(7));
+			cg.emit.emit("pushl",
+					AssemblyEmitter.constant(ExitCode.DIVISION_BY_ZERO.value));
 			cg.emit.emit("call", Config.EXIT);
 			cg.emit.emitLabel(legalLabel);
 			
@@ -198,27 +203,27 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 			break;
 			
 		case B_EQUAL:
-			relationalOperator("je", leftReg, rightReg);
+			cg.emit.relationalOperator("je", leftReg, rightReg);
 			break;
 			
 		case B_NOT_EQUAL:
-			relationalOperator("jne", leftReg, rightReg);
+			cg.emit.relationalOperator("jne", leftReg, rightReg);
 			break;
 			
 		case B_LESS_THAN:
-			relationalOperator("jb", leftReg, rightReg);
+			cg.emit.relationalOperator("jl", leftReg, rightReg);
 			break;
 			
 		case B_LESS_OR_EQUAL:
-			relationalOperator("jbe", leftReg, rightReg);
+			cg.emit.relationalOperator("jle", leftReg, rightReg);
 			break;
 			
 		case B_GREATER_THAN:
-			relationalOperator("ja", leftReg, rightReg);
+			cg.emit.relationalOperator("jg", leftReg, rightReg);
 			break;
 			
 		case B_GREATER_OR_EQUAL:
-			relationalOperator("jae", leftReg, rightReg);
+			cg.emit.relationalOperator("jge", leftReg, rightReg);
 			break;
 		}
 
@@ -229,7 +234,9 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register booleanConst(BooleanConst ast, Context arg) {
+		
 		//cg.emit.emitConstantData(data);
+		
 		/*
 		 * Get a free register and set it to 0 (for false) or 1 (for true).
 		 */
@@ -245,13 +252,14 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	@Override
 	public Register builtInRead(BuiltInRead ast, Context arg) {
 		Register reg = cg.rm.getRegister();
-		cg.emit.emit("sub", constant(16), STACK_REG);
+		int offset = BackendUtils.allocSpaceSize(arg.SP_offset, 2);
+		cg.emit.emit("sub", constant(offset), STACK_REG);
 		cg.emit.emit("leal", AssemblyEmitter.registerOffset(8, STACK_REG), reg);
 		cg.emit.emitStore(reg, 4, STACK_REG);
 		cg.emit.emitStore("$STR_D", 0, STACK_REG);
 		cg.emit.emit("call", SCANF);
 		cg.emit.emitLoad(8, STACK_REG, reg);
-		cg.emit.emit("add", constant(16), STACK_REG);
+		cg.emit.emit("add", constant(offset), STACK_REG);
 		return reg;
 	}
 
@@ -263,54 +271,90 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	@Override
 	public Register index(Index ast, Context arg) {
 		
+		boolean store;
+		Register leftReg, rightReg;
 		int leftRN = cg.rnv.calc(ast.left());
 		int rightRN = cg.rnv.calc(ast.right());
 		
 		if(leftRN > rightRN) {
 			
-			Register leftReg = visit(ast.left(), arg);
+			store = rightRN >= RegisterManager.GPR.length;
+			
+			/*
+			 * Generate code for the array to be indexed.
+			 */
+			leftReg = visit(ast.left(), arg);
 			
 			/*
 			 * Store the computed value if needed.
 			 */
-			if(rightRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				cg.emit.emit("pushl", leftReg);
 				cg.rm.releaseRegister(leftReg);
 			}
 			
-			Register rightReg = visit(ast.right(), arg);
+			/*
+			 * Generate code for the index expression.
+			 */
+			rightReg = visit(ast.right(), arg);
 			
 			/*
 			 * Restore previously stored value if needed.
 			 */
-			if(rightRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				leftReg = cg.rm.getRegister();
 				cg.emit.emit("popl", leftReg);
 			}
 		} else {
 			
-			Register rightReg = visit(ast.right(), arg);
+			store = leftRN >= RegisterManager.GPR.length;
+			
+			/*
+			 * Generate code for the index expression.
+			 */
+			rightReg = visit(ast.right(), arg);
 						
 			/*
 			 * Store the computed value if needed.
 			 */
-			if(leftRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				cg.emit.emit("pushl", rightReg);
 				cg.rm.releaseRegister(rightReg);
 			}
 			
-			Register leftReg = visit(ast.right(), arg);
+			/*
+			 * Generate code for the array to be indexed.
+			 */
+			leftReg = visit(ast.left(), arg);
 			
 			/*
 			 * Restore previously stored value if needed.
 			 */
-			if(leftRN >= cg.rm.availableRegisters()) {
+			if(store) {
 				rightReg = cg.rm.getRegister();
 				cg.emit.emit("popl", rightReg);
 			}
 		}
 		
-		//cg.emit.emit("leal", )
+		/*
+		 * Test whether rightReg holds a number not in [0, size-1] 
+		 * and exit with code 3 if so.
+		 */
+		
+		Register sizeReg = cg.rm.getRegister();
+		String legalLabel = cg.emit.uniqueLabel();
+		String illegalLabel = cg.emit.uniqueLabel();
+		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), rightReg);
+		cg.emit.emit("jl", illegalLabel);
+		cg.emit.emitLoad(4, leftReg, sizeReg);
+		cg.emit.emit("cmpl", sizeReg, rightReg);
+		cg.emit.emit("jge", illegalLabel);
+		cg.emit.emit("jmp", legalLabel);
+		cg.emit.emitLabel(illegalLabel);
+		cg.emit.emit("pushl",
+				AssemblyEmitter.constant(ExitCode.INVALID_ARRAY_BOUNDS.value));
+		cg.emit.emit("call", Config.EXIT);
+		cg.emit.emitLabel(legalLabel);
 		
 		return null;
 	}
@@ -331,19 +375,28 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	public Register newArray(NewArray ast, Context arg) {
 		
 		Register reg = gen(ast.arg());
+		boolean store = cg.rm.isInUse(Register.EAX);
 		
 		/*
 		 * Test whether reg holds a number less than 0 and exit with code 5 if so.
 		 */
 		String legalLabel = cg.emit.uniqueLabel();
 		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), reg);
-		cg.emit.emit("jb", legalLabel);
-		cg.emit.emit("pushl", AssemblyEmitter.constant(5));
+		cg.emit.emit("jge", legalLabel);
+		cg.emit.emit("pushl",
+				AssemblyEmitter.constant(ExitCode.INVALID_ARRAY_SIZE.value));
 		cg.emit.emit("call", Config.EXIT);
 		cg.emit.emitLabel(legalLabel);
 		
 		/*
-		 * Push size of an element (always 4 bytes in this case).
+		 * Save %eax on the stack if it is used.
+		 */
+		if(store)
+			cg.emit.emit("pushl", Register.EAX);
+		
+		/*
+		 * Push second argument of calloc()
+		 * (size of an element, always 4 bytes in this case).
 		 */
 		cg.emit.emit("pushl", AssemblyEmitter.constant(Config.SIZEOF_PTR));
 		
@@ -353,13 +406,36 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 		cg.emit.emit("addl", AssemblyEmitter.constant(2), reg);
 		cg.emit.emit("pushl", reg);
 		
+		/*
+		 * Call calloc.
+		 */
 		cg.emit.emit("call", Config.CALLOC);
 		
-		//cg.emit.emitMove;
+		/*
+		 * Restore reg in case it was used by calloc().
+		 */
+		cg.emit.emit("popl", reg);
+		cg.emit.emit("subl", AssemblyEmitter.constant(2), reg);
 		
-		cg.rm.releaseRegister(reg);
+		/*
+		 * Clean the stack.
+		 */
+		cg.emit.emit("addl", AssemblyEmitter.constant(4), STACK_REG);
 		
-		return Register.EAX;
+		/*
+		 * Set the size.
+		 */
+		cg.emit.emitStore(reg, 4, Register.EAX);
+		
+		/*
+		 * Move the returned pointer in %eax into another register 
+		 * and restore %eax if necessary.
+		 */
+		cg.emit.emitMove(Register.EAX, reg);
+		if(store)
+			cg.emit.emit("popl", Register.EAX);
+		
+		return reg;
 	}
 
 	@Override
@@ -381,12 +457,67 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register thisRef(ThisRef ast, Context arg) {
-		throw new ToDoException();
+		// get offset from base pointer, load to new register and return
+		int this_offset = arg.getOffset("this");
+		Register this_ref = cg.rm.getRegister();
+		cg.emit.emitLoad(this_offset, Register.EBP, this_ref);
+		return this_ref;
 	}
 
 	@Override
 	public Register methodCall(MethodCallExpr ast, Context arg) {
-		throw new ToDoException();
+		// store user caller registers
+		BackendUtils.saveRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
+		arg.SP_offset -= RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		
+		// reserve stack for arguments
+		int argSize = ast.allArguments().size();
+		int offset = BackendUtils.allocSpaceSize(arg.SP_offset, argSize);
+		cg.emit.emit("subl", offset, Register.ESP);
+		arg.SP_offset -= offset;
+				
+		// resolve receiver
+		Register caller = visit(ast.receiver(), arg);
+		cg.emit.emitStore(caller, 0, Register.ESP);
+		cg.rm.releaseRegister(caller);
+		
+		// null check
+		String labelOk = cg.emit.uniqueLabel();
+		cg.emit.emit("cmp", constant(0), caller);
+		cg.emit.emit("jne", labelOk);
+		BackendUtils.emitExit(cg.emit, ExitCode.NULL_POINTER, arg.SP_offset);
+		cg.emit.emitLabel(labelOk);
+		
+		// first store caller than args
+		for (int i = 0; i < argSize - 1; i++) {
+			Register res = visit(ast.argumentsWithoutReceiver().get(i), arg);
+			cg.emit.emitStore(res, (i + 1) * Config.SIZEOF_PTR, Register.ESP);
+			cg.rm.releaseRegister(res);
+		}
+		
+		// find method in memory
+		int method_offset = arg.getVTable().methodOffset(ast.methodName);
+		caller = cg.rm.getRegister();
+		cg.emit.emitLoad(0, Register.ESP, caller);
+		cg.emit.emitLoad(0, caller, caller);
+		cg.emit.emit("addl", constant(method_offset), caller);
+		cg.emit.emitLoad(0, caller, caller);
+		
+		// call method
+		cg.emit.emit("call", "*" + caller.repr);
+		
+		// release stack
+		cg.emit.emit("addl", constant(offset), Register.ESP);
+		arg.SP_offset += offset;
+		
+		// move result from EAX to safe register
+		cg.emit.emitMove(Register.EAX, caller);
+		
+		// restore user caller registers
+		BackendUtils.restoreRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
+		arg.SP_offset += RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		
+		return caller;
 	}
 
 	@Override
