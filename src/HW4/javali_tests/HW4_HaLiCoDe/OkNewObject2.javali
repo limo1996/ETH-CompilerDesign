@@ -1,0 +1,46 @@
+/* Tries to test creation of new object */
+class A {
+	int field1;
+	int field2;
+	
+	boolean field3;
+}
+
+class B extends A{
+	int field4;
+	int field4;
+}
+
+class Main {
+	B ff;
+	void main() {
+		B ff2;
+		ff = new B();
+		ff.field1 = 10;
+		ff.field2 = 9;
+		ff.field3 = true;
+		ff.field4 = 8;
+		ff.field5 = 7;
+
+		copy(ff, ff2);
+		print(ff);
+		writeln();
+		print(ff2);
+		writeln();
+	}
+
+	void copy(B b1, B b2) {
+		b2.field1 = b1.field1;
+		b2.field2 = b1.field2;
+		b2.field3 = b1.field3;
+		b2.field4 = b1.field4;
+		b2.field5 = b1.field5;
+	}
+
+	void print(B b) {
+		write(b.field1);
+		write(b.field2);
+		write(b.field4);
+		write(b.field5);
+	}
+}

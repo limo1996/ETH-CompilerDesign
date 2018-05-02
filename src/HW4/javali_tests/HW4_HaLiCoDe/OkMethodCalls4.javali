@@ -11,21 +11,25 @@ class Main {
 	int foo(int a1, int a2) {
 		int a11, a22;
 		a11 = read();
-		a22 = read();
-		return (a1 - a2) * (a11 + a22) * foo2(1, 2, 3, true);
+		a22 = foo2(3, 2, 1, false);
+		return (a1 - a2) * (a11 + a22) * foo2(1, 2, 3, true); 
 	}
 
 	int foo2(int a1, int a2, int a3, boolean bb) {
 		int i1, i2;
-		i1 = a1 + a2 * a3;
-		i2 = 2;
-		i2 = read();
-		
-		if(bb) {
+		i1 = 1;//read();
+		if(bb && foo3(bb, true)) {
 			i2 = 4 * i1 + 3 * a1 - 2 * a2 + a3;
 		} else {
 			i2 = 5 * i1 + 4 * a1 - 3 * a2 + 2 * a3;
 		}
 		return i2;
+	}
+
+	boolean foo3(boolean a1, boolean a3) {
+		int i1, i2;
+		i2 = 4;
+		i1 = read();
+		return a1 && a3;
 	}
 }

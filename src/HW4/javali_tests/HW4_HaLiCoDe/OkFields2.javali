@@ -1,0 +1,29 @@
+/* Very simple approach to test fields */
+class Main {
+	int field1;
+	int field2;
+	boolean field3;
+	
+	void main() {
+		this.field1 = read();
+		field2 = 4;
+		field3 = true;
+		write(field2);
+		write(field1);
+		field2 = field2 * field1 + field2;
+		write(field2);
+		foo(field1);
+		writeln();
+	}
+
+	void foo(int i1) {
+		int i2;
+		i2 = field1 + i1;
+		field1 = 9;
+		i2 = i2 + field1 * field2;
+		if(field3){
+			i2 = i2 + 1;
+		}
+		write(i2);
+	}
+}

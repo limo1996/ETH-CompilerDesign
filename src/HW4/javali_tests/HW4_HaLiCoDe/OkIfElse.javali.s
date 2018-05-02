@@ -136,7 +136,7 @@ label0:
           # Emitting i
           movl -4(%ebp), %edi
         cmpl %esi, %edi
-        jbe label7
+        jle label7
         movl $0, %edi
         jmp label8
 label7:

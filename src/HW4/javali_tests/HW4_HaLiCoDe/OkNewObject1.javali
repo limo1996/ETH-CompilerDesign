@@ -1,0 +1,30 @@
+/* Tries to test creation of new object */
+class A {
+	int field1;
+	int field2;
+	
+	boolean field3;
+}
+
+class Main {
+	int field1;
+	A ff;
+	void main() {
+		A ff2;
+		ff = new A();
+		field1 = 5;
+		ff.field2 = 10;
+		ff.field1 = field1;
+		copy(ff, ff2);
+		write(ff.field1);
+		write(ff.field2);
+		write(ff2.field1);
+		write(ff2.field2);
+		writeln();
+	}
+
+	void copy(A a1, A a2) {
+		a2.field1 = a1.field1;
+		a2.field2 = a1.field2;
+	}
+}

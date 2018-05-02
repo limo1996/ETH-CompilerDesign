@@ -1,0 +1,17 @@
+/* Very simple approach to test fields */
+class Main {
+	int field1;
+	int field2;
+	boolean field3;
+	
+	void main() {
+		this.field1 = read();
+		field2 = 4;
+		field3 = true;
+		write(field2);
+		write(field1);
+		field2 = field2 * field1 + field2;
+		write(field2);
+		writeln();
+	}
+}

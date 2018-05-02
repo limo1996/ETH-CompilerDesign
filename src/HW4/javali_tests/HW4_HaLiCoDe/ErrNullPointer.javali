@@ -1,0 +1,18 @@
+/* Testing null pointer */
+
+class A {
+	int field1;
+	int foo() {
+		return 5 * field1;
+	}
+}
+
+class Main {
+	void main() {
+		int i1;
+		A aa;
+		i1 = aa.foo();
+		write(i1);
+		writeln();
+	}
+}
