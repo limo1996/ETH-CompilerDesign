@@ -1,0 +1,18 @@
+class Main {
+	int foo(int i) {
+		return 6 * i + 9;
+	}
+
+	int foo2(int i) {
+		int i1;
+		i1 = foo(9);
+		return i1 * i * 9;
+	}
+
+	void main() {
+		int i;
+		i = foo(9) * foo2(2) * foo(98) * foo2(57);
+		write(i);
+		writeln();
+	}
+}

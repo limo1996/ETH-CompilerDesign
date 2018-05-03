@@ -83,6 +83,7 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 		// enter method with size of local parameters.
 		int localsSize = ast.sym.locals.size() * Config.SIZEOF_PTR;
 		cg.emit.emit("enter", AssemblyEmitter.constant(localsSize), AssemblyEmitter.constant(0));
+		arg.SP_offset = (-1) * (localsSize + 2 * Config.SIZEOF_PTR);
 		
 		// set method to context and emit locals on the stack.
 		arg.setMethod(ast, cg.emit);
@@ -91,7 +92,8 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 		BackendUtils.saveRegisters(cg.emit, Arrays.asList(RegisterManager.CALLEE_SAVE));
 		
 		// current offset is 8 for enter + return and length of saved registers.
-		arg.SP_offset = -1 * (localsSize + 8 + (RegisterManager.CALLEE_SAVE.length * Config.SIZEOF_PTR));
+		arg.SP_offset -= (RegisterManager.CALLEE_SAVE.length * Config.SIZEOF_PTR);
+		
 		visit(ast.body(), arg);
 		
 		// restore registers and add to offset.

@@ -1,0 +1,42 @@
+class Main {
+	int field1;
+	int field2;	
+	int field3;
+
+	void main() {
+		load();
+		print();
+		double();
+		print();
+		square();
+		print();
+		double();
+		square();
+		print();
+	}
+
+	void load() {
+		field1 = read();
+		field2 = read();
+		field3 = read();
+	}
+
+	void print() {
+		write(field1);
+		write(field2);
+		write(field3);
+		writeln();
+	}
+
+	void double() {
+		field1 = field1 * 2;
+		field2 = field2 * 2;
+		field3 = field3 * 2;
+	}
+
+	void square() {
+		field1 = field1 * field1;
+		field2 = field2 * field2;
+		field3 = field3 * field3;
+	}
+}		

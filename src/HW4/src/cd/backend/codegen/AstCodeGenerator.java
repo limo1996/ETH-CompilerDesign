@@ -11,6 +11,7 @@ import java.util.Stack;
 
 import cd.Config;
 import cd.Main;
+import cd.backend.ExitCode;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast;
 import cd.ir.Ast.ClassDecl;
@@ -168,7 +169,7 @@ public class AstCodeGenerator {
 		
 		// Emit main
 		emit.emitRaw(Config.TEXT_SECTION);
-		emit.emitRaw(".global " + Config.MAIN);
+		emit.emitRaw(".globl " + Config.MAIN);
 		emit.emitLabel(Config.MAIN);
 		
 		// emit function prologue
@@ -192,19 +193,23 @@ public class AstCodeGenerator {
 		// get pointer to vtable of main
 		Register vtable_ptr = rm.getRegister();
 		emit.emit("leal", main.sym.v_table.name(), vtable_ptr);
-		emit.emitMove(vtable_ptr, AssemblyEmitter.registerOffset(0, main_ptr));
+		emit.emitStore(vtable_ptr, 0, main_ptr);
 		
 		// save this on the stack, get offset of the function and call it
-		emit.emitMove(main_ptr, AssemblyEmitter.registerOffset(0, Register.ESP));
+		emit.emitStore(main_ptr, 0, Register.ESP);
+		
+		emit.emitLoad(0, main_ptr, main_ptr);
 		int main_offset = main.sym.v_table.methodOffset("main");
-		emit.emit("addl", AssemblyEmitter.constant(main_offset), vtable_ptr);
-		emit.emitLoad(0, vtable_ptr, vtable_ptr);
-		emit.emit("call", "*" + vtable_ptr);
+		emit.emit("addl", AssemblyEmitter.constant(main_offset), main_ptr);
+		emit.emitLoad(0, main_ptr, main_ptr);
+		emit.emit("call", "*" + main_ptr.repr);
+		
+		emit.emitStore(AssemblyEmitter.constant(ExitCode.OK.value), 0, Register.ESP);
+		emit.emit("call", Config.EXIT);
 		
 		// release registers and return
 		rm.releaseRegister(vtable_ptr);
 		rm.releaseRegister(main_ptr);
-		emitMethodSuffix(true);
 	}
 
 
