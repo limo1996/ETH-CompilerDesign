@@ -111,14 +111,15 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 		 * and a label to jump to if it evaluates to false.
 		 */
 		Register condition = cg.eg.visit(ast.condition(), arg);
-		String otherwiseLabel = cg.emit.uniqueLabel();
+		String afterThen = cg.emit.uniqueLabel();
+		String afterElse = cg.emit.uniqueLabel();
 		
 		/*
 		 * Test whether the condition register holds 0 (false)
 		 * and jump if so.
 		 */
-		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), condition);
-		cg.emit.emit("je", otherwiseLabel);
+		cg.emit.emit("cmp", AssemblyEmitter.constant(0), condition);
+		cg.emit.emit("je", afterThen);
 		cg.rm.releaseRegister(condition);
 		
 		/*
@@ -126,78 +127,65 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 		 */
 		visit(ast.then(), arg);
 		
-		/*
-		 * Determine whether ast is a if-then
-		 * or a if-then-else statement.
-		 */
-		if(ast.otherwise() != null) {
-			
-			/*
-			 * If there is an else-part an (unconditional) jump
-			 * (and a corresponding label) over it is needed after the then-body.
-			 */
-			String thenLabel = cg.emit.uniqueLabel();
-			cg.emit.emit("jmp", thenLabel);
-			
-			/*
-			 * Emit label and code for the else-part.
-			 */
-			cg.emit.emitLabel(otherwiseLabel);
-			visit(ast.otherwise(), arg);
-			
-			/*
-			 * Label for the (unconditional) jump taken after the then-body.
-			 */
-			cg.emit.emitLabel(thenLabel);
-		} else {
-			
-			/*
-			 * If there is no else-part simply jump over the then-body
-			 * to this label if the condition is not met.
-			 */
-			cg.emit.emitLabel(otherwiseLabel);
-		}
+        // skip around else-part
+        cg.emit.emit("jmp", afterElse);
+        cg.emit.emitLabel(afterThen);
+
+        // code for else
+        visit(ast.otherwise(), arg);
+
+        cg.emit.emitLabel(afterElse);
 		return null;
 	}
 
 	@Override
 	public Register whileLoop(WhileLoop ast, Context arg) {
-		
-		/*
-		 * Generate labels needed.
-		 */
+		String labelBefore = cg.emit.uniqueLabel();
+        cg.emit.emitLabel(labelBefore);
+
+        // code for condition
+        Register cond = cg.eg.visit(ast.condition(), arg);
+
+        // loop check
+        cg.emit.emit("cmp", constant(0), cond);
+        cg.rm.releaseRegister(cond);
+        
+        // end loop
+        String labelAfter = cg.emit.uniqueLabel();
+        cg.emit.emit("je", labelAfter);
+
+        // generate code for loop-body
+        visit(ast.body(), arg);
+
+        // loop again
+        cg.emit.emit("jmp", labelBefore);
+        cg.emit.emitLabel(labelAfter);
+		return null;
+
+		/* I've tried different approach to it cause it is maybe the reason for server TIMEOUT
+		// Generate labels needed.
 		String conditionLabel = cg.emit.uniqueLabel();
 		String bodyLabel = cg.emit.uniqueLabel();
 		
-		/*
-		 * Unconditionally jump into the expression evaluation from outside.
-		 */
+		// Unconditionally jump into the expression evaluation from outside.
 		cg.emit.emit("jmp", conditionLabel);
 		
-		/*
-		 * Emit label and code for the body.
-		 */
+		// Emit label and code for the body.
 		cg.emit.emitLabel(bodyLabel);
 		visit(ast.body(), arg);
 		
-		/*
-		 * Jump here when entering the loop for the first time.
-		 */
+		// Jump here when entering the loop for the first time.
 		cg.emit.emitLabel(conditionLabel);
 		
-		/*
-		 * Generate code for the evaluation of the condition.
-		 */
+		// Generate code for the evaluation of the condition.
 		Register condition = cg.eg.visit(ast.condition(), arg);
 		
-		/*
-		 * Test whether the condition is non-zero (true)
-		 * and jump to the body if so.
-		 */
+		// Test whether the condition is non-zero (true)
+		// and jump to the body if so.
 		cg.emit.emit("cmpl", AssemblyEmitter.constant(0), condition);
 		cg.emit.emit("jne", bodyLabel);
 		cg.rm.releaseRegister(condition);
-		return null;
+		return null;*/
 	}
 
 	@Override

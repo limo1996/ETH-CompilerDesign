@@ -1,0 +1,16 @@
+class Main {
+	void main() {
+		int i1, i2, i3, i4;
+		i1 = 9;
+		i2 = 4;
+		i4 = foo(5);
+		i3 = i1 * (i1 + (i2 - i1) * i2) * i4;
+		write(i3);
+	}
+
+	int foo(int n){
+		int i1;
+		i1 = read();
+		return i1 * 5;
+	}
+}

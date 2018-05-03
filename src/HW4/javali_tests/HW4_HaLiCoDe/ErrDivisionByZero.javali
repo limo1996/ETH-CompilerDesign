@@ -1,0 +1,9 @@
+class Main {
+    void main() {
+        int i0, i1;
+        i0 = 5;
+        i1 = 0;
+        i0 = i0 / i1;
+        write(i0);
+    }
+}

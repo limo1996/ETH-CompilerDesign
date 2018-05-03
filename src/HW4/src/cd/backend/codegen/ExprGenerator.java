@@ -163,9 +163,7 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 			String legalLabel = cg.emit.uniqueLabel();
 			cg.emit.emit("cmpl", AssemblyEmitter.constant(0), rightReg);
 			cg.emit.emit("jne", legalLabel);
-			cg.emit.emit("pushl",
-					AssemblyEmitter.constant(ExitCode.DIVISION_BY_ZERO.value));
-			cg.emit.emit("call", Config.EXIT);
+			BackendUtils.emitExit(cg.emit, ExitCode.DIVISION_BY_ZERO, arg.SP_offset);
 			cg.emit.emitLabel(legalLabel);
 			
 			
@@ -536,8 +534,13 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 
 	@Override
 	public Register newObject(NewObject ast, Context arg) {
-		BackendUtils.saveRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
-		arg.SP_offset -= RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		List<Register> toSave = new ArrayList<>();
+		for(Register r : RegisterManager.CALLER_SAVE) {
+			if(cg.rm.isInUse(r))
+				toSave.add(r);
+		}
+		BackendUtils.saveRegisters(cg.emit, toSave);
+		arg.SP_offset -= toSave.size() * Config.SIZEOF_PTR;
 		
 		ClassSymbol symbol = (ClassSymbol)ast.type;
 		List<String> args = Arrays.asList(AssemblyEmitter.constant(BackendUtils.size(symbol)),
@@ -552,8 +555,8 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 		cg.emit.emitStore(Register.EAX, 0, new_ref);
 		
 		BackendUtils.popArguments(cg.emit, args, arg.SP_offset);
-		BackendUtils.restoreRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
-		arg.SP_offset += RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		BackendUtils.restoreRegisters(cg.emit, toSave);
+		arg.SP_offset += toSave.size() * Config.SIZEOF_PTR;
 		
 		return new_ref;
 	}
@@ -582,8 +585,13 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 	@Override
 	public Register methodCall(MethodCallExpr ast, Context arg) {
 		// store user caller registers
-		BackendUtils.saveRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
-		arg.SP_offset -= RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		List<Register> toSave = new ArrayList<>();
+		for(Register r : RegisterManager.CALLER_SAVE) {
+			if(cg.rm.isInUse(r))
+				toSave.add(r);
+		}
+		BackendUtils.saveRegisters(cg.emit, toSave);
+		arg.SP_offset -= toSave.size() * Config.SIZEOF_PTR;
 		
 		// reserve stack for arguments
 		int argSize = ast.allArguments().size();
@@ -630,8 +638,8 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 		cg.emit.emitMove(Register.EAX, caller);
 		
 		// restore user caller registers
-		BackendUtils.restoreRegisters(cg.emit, Arrays.asList(RegisterManager.CALLER_SAVE));
-		arg.SP_offset += RegisterManager.CALLER_SAVE.length * Config.SIZEOF_PTR;
+		BackendUtils.restoreRegisters(cg.emit, toSave);
+		arg.SP_offset += toSave.size() * Config.SIZEOF_PTR;
 		
 		return caller;
 	}
