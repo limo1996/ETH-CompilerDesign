@@ -1,0 +1,12 @@
+class Main {
+	void main() {
+		int i0;
+		i0 = 1;
+
+		write((i0 + i0) - (i0 + i0));
+		
+		i0 = 5;
+		i0 = 6;
+		i0 = read();
+	}
+}

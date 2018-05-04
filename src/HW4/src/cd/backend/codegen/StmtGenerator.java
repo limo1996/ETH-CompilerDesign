@@ -192,12 +192,15 @@ class StmtGenerator extends AstVisitor<Register, Context> {
 
 	@Override
 	public Register assign(Assign ast, Context arg) {
-		// left hand side requires to be pointer to memory.
-		arg.returnValue = false;
-		Register left = cg.eg.visit(ast.left(), arg);
 		// right hand side has to be a value.
 		arg.returnValue = true;
 		Register right = cg.eg.visit(ast.right(), arg);
+		
+		// left hand side requires to be pointer to memory.
+		arg.returnValue = false;
+		Register left = cg.eg.visit(ast.left(), arg);
+		
+		arg.returnValue = true;
 		// store to the left register and release both of them.
 		cg.emit.emitStore(right, 0, left);
 		cg.rm.releaseRegister(left);
