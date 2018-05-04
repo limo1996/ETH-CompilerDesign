@@ -13,8 +13,9 @@ import cd.ir.Symbol.ClassSymbol;
  */
 public class OTable {
 	private List<String> offsets;
-	
+	private ClassSymbol decl;
 	public OTable(ClassSymbol decl) {
+		this.decl = decl;
 		this.offsets = new ArrayList<String>();
 		if(decl.equals(ClassSymbol.objectType))
 			offsets.add(BackendUtils.getVTableLabel(decl.name));
@@ -27,12 +28,22 @@ public class OTable {
 		}
 	}
 	
+	public void debug() {
+		System.out.println("OTable for " + decl.name + ": ");
+		int i = 0;
+		for(String offset : offsets) {
+			System.out.println(offset + ": " + i);
+			i++;
+		}
+	}
+	
 	/**
 	 * Returns offset of the field in memory.
 	 * @param field of the object
 	 * @return offsets of the field.
 	 */
 	public int offsetOf(String field) {
+		//System.out.println("Offset of: " + field);
 		int index = offsets.indexOf(field);
 		return index * Config.SIZEOF_PTR;
 	}

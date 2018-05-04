@@ -12,6 +12,8 @@ class Base extends A{
 		writeln();
 	}
 	void main() {
+		write(-1);
+		writeln();
 		this.loadConst();
 		print();	
 	}

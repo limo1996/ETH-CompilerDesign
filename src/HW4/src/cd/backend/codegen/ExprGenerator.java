@@ -437,15 +437,14 @@ class ExprGenerator extends ExprVisitor<Register, Context> {
 		boolean old_ret = arg.returnValue;
 		int offset = -1;
 		ClassSymbol curr = sym;
-		while (offset == -1 && curr != ClassSymbol.objectType) {
+		while (offset < 0 && curr != ClassSymbol.objectType) {
 			offset = sym.o_table.offsetOf(curr.name + "." + ast.fieldName);
 			curr = curr.superClass;
 		}
 		
 		arg.returnValue = true;
 		
-		System.out.println(ast.arg().getClass());
-		System.out.println("Field: " + ast.fieldName);
+		//System.out.println("Field: " + ast.fieldName + " offset: " + offset);
 		//assert ast.arg() instanceof ThisRef;
 		
 		Register reg = visit(ast.arg(), arg);
