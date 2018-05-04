@@ -1,0 +1,44 @@
+class A {
+	int field1;
+	int field2;
+}
+
+class B extends A {
+	void print() {
+		write(-1);
+		write(field1);
+		write(field2);
+		writeln();
+	}
+
+	void main() {
+		this.loadConst();
+		print();
+	}
+
+	void loadConst() {
+		write(-2);
+		writeln();
+		field1 = 2;
+		field2 = 3;
+	}
+}
+
+class C extends B {
+	void loadConst() {
+		write(-3);
+		writeln();
+		field1 = 4;
+		field2 = 5;
+	}
+}
+
+class Main {
+	void main() {
+		B b;
+		b = new C();
+		b.main();
+	}
+}
+
+	

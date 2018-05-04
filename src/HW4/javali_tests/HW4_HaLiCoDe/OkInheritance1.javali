@@ -1,0 +1,23 @@
+class A {
+	int foo(){
+		return 5;
+	}
+
+	void print() {
+		write(foo());
+	}
+}
+
+class B extends A {
+	int foo() {
+		return 7;
+	}
+}
+	
+class Main {
+	void main() {
+		A a;
+		a = new B();
+		a.print();
+	}
+}
