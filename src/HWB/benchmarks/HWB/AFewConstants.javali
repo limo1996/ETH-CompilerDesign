@@ -1,0 +1,40 @@
+class Main {
+    int SIZE;
+    
+    void main() {
+        int[] a;
+        int i;
+        int pi;
+        int e;
+        int thou;
+        
+        pi = 3141;
+        e = 2718;
+        
+        a = readStuff();
+        
+        i = 0;
+        while(i < SIZE) {
+            write(pi * e * a[i] / (1000 * 1000));
+            writeln();
+            write(a[i] * pi * e / (1000 * 1000));
+            writeln();
+            i = i + 1;
+        }
+    }
+    
+    int[] readStuff() {
+        int[] a;
+        int i;
+        
+        SIZE = 5;
+        a = new int[SIZE];
+        
+        i = 0;
+        while (i < SIZE) {
+            a[i] = read();
+            i = i + 1;
+        }
+        return a;
+    }
+}

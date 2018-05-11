@@ -14,6 +14,7 @@ src/.svn/
 # .err files
 *.err
 *.javali.err
+.recommenders/
 
 # javali shit 
 *.bin
@@ -48,3 +49,4 @@ src/.metadata/
 src/.recommenders/
 src/HW2/bin/cd/
 src/HW4/.metadata/
+/.metadata/

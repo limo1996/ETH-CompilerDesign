@@ -1,0 +1,15 @@
+digraph G {
+  graph [ rankdir = "LR" ];
+  subgraph cluster_0 {
+    label = "Main.main"
+    M0_BB0 [
+      shape="record"
+      label="BB0|i0 = 0|i0 = (5 + i0)|write(i0)|writeln()|i0 = (i0 + 5)|write(i0)|writeln()|i0 = ((i0 + 5) + 3)|write(i0)|writeln()"
+    ];
+    M0_BB0 -> M0_BB1;
+    M0_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+}

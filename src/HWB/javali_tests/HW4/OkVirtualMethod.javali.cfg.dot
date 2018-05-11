@@ -1,0 +1,63 @@
+digraph G {
+  graph [ rankdir = "LR" ];
+  subgraph cluster_0 {
+    label = "A.override"
+    M0_BB0 [
+      shape="record"
+      label="BB0|write(0)|writeln()"
+    ];
+    M0_BB0 -> M0_BB1;
+    M0_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+  subgraph cluster_1 {
+    label = "A.base"
+    M1_BB0 [
+      shape="record"
+      label="BB0|write(1)|writeln()"
+    ];
+    M1_BB0 -> M1_BB1;
+    M1_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+  subgraph cluster_2 {
+    label = "B.override"
+    M2_BB0 [
+      shape="record"
+      label="BB0|write(2)|writeln()"
+    ];
+    M2_BB0 -> M2_BB1;
+    M2_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+  subgraph cluster_3 {
+    label = "B.sub"
+    M3_BB0 [
+      shape="record"
+      label="BB0|write(3)|writeln()"
+    ];
+    M3_BB0 -> M3_BB1;
+    M3_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+  subgraph cluster_4 {
+    label = "Main.main"
+    M4_BB0 [
+      shape="record"
+      label="BB0|a = null|b = null|a = new A()|a.base(...)|a.override(...)|b = new B()|b.base(...)|b.override(...)|b.sub(...)|a = b|a.base(...)|a.override(...)|b.base(...)|b.override(...)|b.sub(...)"
+    ];
+    M4_BB0 -> M4_BB1;
+    M4_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+}

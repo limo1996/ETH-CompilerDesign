@@ -1,0 +1,195 @@
+digraph G {
+  graph [ rankdir = "LR" ];
+  subgraph cluster_0 {
+    label = "Record.print"
+    M0_BB0 [
+      shape="record"
+      label="BB0|write(this.a)|writeln()"
+    ];
+    M0_BB0 -> M0_BB1;
+    M0_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+  subgraph cluster_1 {
+    label = "Main.swap"
+    M1_BB0 [
+      shape="record"
+      label="BB0|temp = r1.a|r1.a = r2.a|r2.a = temp"
+    ];
+    M1_BB0 -> M1_BB1;
+    M1_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+  }
+  subgraph cluster_2 {
+    label = "Main.sort"
+    M2_BB0 [
+      shape="record"
+      label="BB0|m = ((this.a[left].a + this.a[right].a) / 2)|i = left|j = right"
+    ];
+    M2_BB0 -> M2_BB2;
+    M2_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+    M2_BB2 [
+      shape="record"
+      label="BB2|If: (i \<= j)"
+    ];
+    M2_BB2 -> M2_BB3;
+    M2_BB2 -> M2_BB4 [label="False"];
+    M2_BB3 [
+      shape="record"
+      label="BB3"
+    ];
+    M2_BB3 -> M2_BB5;
+    M2_BB4 [
+      shape="record"
+      label="BB4|If: (left \< j)"
+    ];
+    M2_BB4 -> M2_BB14;
+    M2_BB4 -> M2_BB15 [label="False"];
+    M2_BB5 [
+      shape="record"
+      label="BB5|If: (this.a[i].a \< m)"
+    ];
+    M2_BB5 -> M2_BB6;
+    M2_BB5 -> M2_BB7 [label="False"];
+    M2_BB6 [
+      shape="record"
+      label="BB6|i = (i + 1)"
+    ];
+    M2_BB6 -> M2_BB5;
+    M2_BB7 [
+      shape="record"
+      label="BB7"
+    ];
+    M2_BB7 -> M2_BB8;
+    M2_BB8 [
+      shape="record"
+      label="BB8|If: (this.a[j].a \> m)"
+    ];
+    M2_BB8 -> M2_BB9;
+    M2_BB8 -> M2_BB10 [label="False"];
+    M2_BB9 [
+      shape="record"
+      label="BB9|j = (j - 1)"
+    ];
+    M2_BB9 -> M2_BB8;
+    M2_BB10 [
+      shape="record"
+      label="BB10|If: (i \<= j)"
+    ];
+    M2_BB10 -> M2_BB11;
+    M2_BB10 -> M2_BB12 [label="False"];
+    M2_BB11 [
+      shape="record"
+      label="BB11|this.swap(...)|i = (i + 1)|j = (j - 1)"
+    ];
+    M2_BB11 -> M2_BB13;
+    M2_BB12 [
+      shape="record"
+      label="BB12|nop"
+    ];
+    M2_BB12 -> M2_BB13;
+    M2_BB13 [
+      shape="record"
+      label="BB13"
+    ];
+    M2_BB13 -> M2_BB2;
+    M2_BB14 [
+      shape="record"
+      label="BB14|this.sort(...)"
+    ];
+    M2_BB14 -> M2_BB16;
+    M2_BB15 [
+      shape="record"
+      label="BB15|nop"
+    ];
+    M2_BB15 -> M2_BB16;
+    M2_BB16 [
+      shape="record"
+      label="BB16|If: (i \< right)"
+    ];
+    M2_BB16 -> M2_BB17;
+    M2_BB16 -> M2_BB18 [label="False"];
+    M2_BB17 [
+      shape="record"
+      label="BB17|this.sort(...)"
+    ];
+    M2_BB17 -> M2_BB19;
+    M2_BB18 [
+      shape="record"
+      label="BB18|nop"
+    ];
+    M2_BB18 -> M2_BB19;
+    M2_BB19 [
+      shape="record"
+      label="BB19"
+    ];
+    M2_BB19 -> M2_BB1;
+  }
+  subgraph cluster_3 {
+    label = "Main.main"
+    M3_BB0 [
+      shape="record"
+      label="BB0|SIZE = 5|this.a = new Record[][SIZE]|j = 0"
+    ];
+    M3_BB0 -> M3_BB2;
+    M3_BB1 [
+      shape="record"
+      label="BB1"
+    ];
+    M3_BB2 [
+      shape="record"
+      label="BB2|If: (j \< SIZE)"
+    ];
+    M3_BB2 -> M3_BB3;
+    M3_BB2 -> M3_BB4 [label="False"];
+    M3_BB3 [
+      shape="record"
+      label="BB3|this.a[j] = new Record()|j = (j + 1)"
+    ];
+    M3_BB3 -> M3_BB2;
+    M3_BB4 [
+      shape="record"
+      label="BB4|this.a[0].a = 5|this.a[1].a = 3|this.a[2].a = 1|this.a[3].a = 4|this.a[4].a = 2|j = 0"
+    ];
+    M3_BB4 -> M3_BB5;
+    M3_BB5 [
+      shape="record"
+      label="BB5|If: (j \< SIZE)"
+    ];
+    M3_BB5 -> M3_BB6;
+    M3_BB5 -> M3_BB7 [label="False"];
+    M3_BB6 [
+      shape="record"
+      label="BB6|this.a[j].print(...)|j = (j + 1)"
+    ];
+    M3_BB6 -> M3_BB5;
+    M3_BB7 [
+      shape="record"
+      label="BB7|writeln()|this.sort(...)|j = 0"
+    ];
+    M3_BB7 -> M3_BB8;
+    M3_BB8 [
+      shape="record"
+      label="BB8|If: (j \< SIZE)"
+    ];
+    M3_BB8 -> M3_BB9;
+    M3_BB8 -> M3_BB10 [label="False"];
+    M3_BB9 [
+      shape="record"
+      label="BB9|this.a[j].print(...)|j = (j + 1)"
+    ];
+    M3_BB9 -> M3_BB8;
+    M3_BB10 [
+      shape="record"
+      label="BB10|writeln()"
+    ];
+    M3_BB10 -> M3_BB1;
+  }
+}

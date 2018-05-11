@@ -1,0 +1,77 @@
+// Test that there are no semantic failures for a correct program.
+
+class A {
+
+	 int a1;
+	 boolean a2;
+	 A a3;
+	 Object[] a4;
+	
+	int seta1(int arg) {
+		this.a1 = arg;
+		
+		if(arg > a3.a1){
+			seta2(true);
+		}
+		else {
+			seta2(false);
+		}
+		
+		return arg;
+	} 
+	
+	boolean seta2(boolean arg) {
+		this.a2 = arg;
+		return this.a2;
+	}
+	
+	A seta3(A arg) {
+		this.a3 = arg;
+		
+		if(this.a1 > arg.a1) {
+			seta2(true);
+		}
+		else {
+			seta2(false);
+		}
+		return arg;
+	}
+	
+	Object[] seta4(Object[] arg) {
+		this.a4 = arg;
+		return this.a4;
+	}
+	
+	void Am1() {
+	
+		int Am1l1;
+		
+		Am1l1 = 0;
+		
+		while(a1 <= a3.a1) {
+			seta1(this.a1 + 1);
+			Am1l1 = Am1l1 + 1;
+		}
+		
+		return;
+	}
+}
+
+class Main {
+	void main() {
+		A o1;
+		
+		o1 = new A();
+		
+		o1.seta1(9);
+		o1.seta2(false);
+		o1.seta3(o1);
+		o1.seta4(null);
+		
+		o1.Am1();
+		
+		write(o1.a1);
+		
+		writeln();
+	}
+}
