@@ -4,6 +4,7 @@ src/HW2/src/cd/frontend/.DS_Store
 # Log file
 *.log
 *.DS_Store
+*.cfg.dot
 
 # Prefs files
 *.prefs

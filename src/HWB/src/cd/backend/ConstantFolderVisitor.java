@@ -1,5 +1,8 @@
 package cd.backend;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cd.backend.codegen.AssemblyFailedException;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.AstRewriteVisitor;
@@ -10,9 +13,12 @@ import cd.ir.Ast;
 
 public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 
+	/**
+	 * In unary op. we need to check whether we know the actual value at compile time.
+	 * If yes we do the optimization.
+	 */
 	@Override
 	public Ast unaryOp(UnaryOp ast, Void arg) {
-		System.out.println("UnaryyOp");
 		Ast to_ret = ast;
 		Expr arg_e = (Expr)this.visit(ast.arg(), arg);
 		if(arg_e instanceof IntConst) {
@@ -32,33 +38,30 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 	}
 	
 	public Ast assign(Ast.Assign ast, Void arg) {
-		visit(ast.right(), arg);
+		ast.setRight((Expr)visit(ast.right(), arg));
 		return ast;
 	}
 	
 	public Ast classDecl(Ast.ClassDecl ast, Void arg) {
-		visitChildren(ast, arg);
-		return ast;
+		return visitChildren(ast, arg);
 	}
 	
-	public Ast seq(Ast.Seq ast, Void arg) {
-		visitChildren(ast, arg);
-		return ast;
-	}
-	public Ast varDecl(Ast.VarDecl ast, Void arg) {
-		visitChildren(ast, arg);
-		return ast;
-	}
 	
-	public Ast methodDecl(Ast.MethodDecl ast, Void arg) {
-		for (BasicBlock blk : ast.cfg.allBlocks) {			
-			for(Stmt stmt : blk.stmts) {
-				visit(stmt, arg);
-			}
-		}
-		return ast;
-	}
+	/**
+	 * TODO: 
+	 * x * 0 => 0
+	 * x + 0 || 0 + x => x
+	 * x - 0 => x
+	 * 0 - x => -x
+	 * true || x => true
+	 * false && x => false
+	 */
 	
+	/**
+	 * In binary op we can perform whole bunch of optimizations. 
+	 * Some of them are listed above and the others are when we know 
+	 * actual values at compile time.
+	 */
 	@Override
 	public Ast binaryOp(BinaryOp ast, Void arg) {
 		Ast left = visit(ast.left(), arg);
@@ -66,7 +69,6 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 		if(left instanceof IntConst && right instanceof IntConst) {
 			int left_v = ((IntConst)left).value;
 			int right_v = ((IntConst)right).value;
-			System.out.println(left_v + " " + right_v);
 			switch(ast.operator) {
 				case B_TIMES:
 					return new IntConst(left_v * right_v);
@@ -96,6 +98,40 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 								+ PrimitiveTypeSymbol.intType + " or "
 								+ PrimitiveTypeSymbol.booleanType);
 			}
+		} else {
+			boolean l_known = false, r_known = false;
+			int l_val = 0, r_val = 0;
+			if(left instanceof IntConst) {
+				l_known = true;
+				l_val = ((IntConst)left).value;
+			} else if(right instanceof IntConst) {
+				r_known = true;
+				r_val = ((IntConst)right).value;
+			}
+				
+			// x * 0 => 0
+			// x + 0 || 0 + x => x
+			// x - 0 => x
+			// 0 - x => -x
+			if(l_known && l_val == 0) {
+				switch(ast.operator) {
+				case B_TIMES:
+					return new IntConst(0);
+				case B_PLUS:
+					return right;
+				case B_MINUS:
+					return new UnaryOp(UnaryOp.UOp.U_MINUS, (Expr)right);
+				}
+			} else if (r_known && r_val == 0){
+				switch(ast.operator) {
+				case B_TIMES:
+					return new IntConst(0);
+				case B_PLUS:
+					return left;
+				case B_MINUS:
+					return left;
+				}
+			}
 		}
 		
 		if(left instanceof BooleanConst && right instanceof BooleanConst) {
@@ -117,7 +153,25 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 								+ PrimitiveTypeSymbol.intType + " or "
 								+ PrimitiveTypeSymbol.booleanType);
 			}
+		} else {
+			boolean val = true, set = true;
+			if(left instanceof BooleanConst) {
+				val = ((BooleanConst)left).value;
+			} else if (right instanceof BooleanConst) {
+				val = ((BooleanConst)right).value;
+			} else {
+				set = false;
+			}
+			
+			if(set) {
+				if(ast.operator.equals(BinaryOp.BOp.B_AND) && !val)
+					return new BooleanConst(false);
+				if(ast.operator.equals(BinaryOp.BOp.B_OR) && val)
+					return new BooleanConst(true);
+			}
 		}
+		ast.setLeft((Expr)left);
+		ast.setRight((Expr)right);
 		return ast;
 	}
 }

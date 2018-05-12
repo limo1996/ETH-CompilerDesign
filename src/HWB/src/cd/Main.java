@@ -124,6 +124,12 @@ public class Main {
 	public void semanticCheck(List<ClassDecl> astRoots) {
 		new SemanticAnalyzer(this).check(astRoots);
 
+		// constant folding 
+		ConstantFolderVisitor constV = new ConstantFolderVisitor();
+		for(ClassDecl cd: astRoots) {
+			constV.visit(cd, null);
+		}
+
 		// Build control flow graph:
 		for (ClassDecl cd : astRoots)
 			for (MethodDecl md : cd.methods())

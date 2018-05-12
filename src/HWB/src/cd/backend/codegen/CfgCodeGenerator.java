@@ -14,6 +14,7 @@ import cd.ir.AstVisitor;
 import cd.ir.BasicBlock;
 import cd.ir.ControlFlowGraph;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
+import cd.util.debug.AstDump;
 
 public class CfgCodeGenerator {
 
@@ -27,9 +28,7 @@ public class CfgCodeGenerator {
 
 	public void go(List<? extends ClassDecl> astRoots) {
 		cg.emitPrefix(astRoots);
-		ConstantFolderVisitor constV = new ConstantFolderVisitor();
 		for (ClassDecl cdecl : astRoots) {
-			constV.classDecl(cdecl, null);
 			new CfgStmtVisitor().visit(cdecl, null);
 		}
 	}

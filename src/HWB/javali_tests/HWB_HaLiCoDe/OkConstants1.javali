@@ -2,7 +2,7 @@ class Main {
 	void main() {
 		int i1, i2;
 		i1 = -(9 * 8 / 9 + 6 - 8 * 45 / 7);
-		i2 = i1 + (9 * 6 - 2 + 98 / 34);
+		i2 = +(9 * 6 - 2 + 98 / 34);
 		write(i1);
 		write(i2);
 	}
