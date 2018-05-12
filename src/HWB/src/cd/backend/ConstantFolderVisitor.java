@@ -53,6 +53,8 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 	 * x + 0 || 0 + x => x
 	 * x - 0 => x
 	 * 0 - x => -x
+	 * 1 * x => x
+	 * x / 1 => x
 	 * true || x => true
 	 * false && x => false
 	 */
@@ -113,23 +115,51 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 			// x + 0 || 0 + x => x
 			// x - 0 => x
 			// 0 - x => -x
-			if(l_known && l_val == 0) {
+			if(l_known) {
 				switch(ast.operator) {
 				case B_TIMES:
-					return new IntConst(0);
+					if(l_val == 0) {
+						return new IntConst(0);
+					}
+					else if(l_val == 1) {
+						return right;
+					}
+					break;
 				case B_PLUS:
-					return right;
+					if(l_val == 0) {
+						return right;
+					}
+					break;
 				case B_MINUS:
-					return new UnaryOp(UnaryOp.UOp.U_MINUS, (Expr)right);
+					if(l_val == 0) {
+						return new UnaryOp(UnaryOp.UOp.U_MINUS, (Expr)right);
+					}
+					break;
 				}
-			} else if (r_known && r_val == 0){
+			} else if (r_known){
 				switch(ast.operator) {
 				case B_TIMES:
-					return new IntConst(0);
+					if(r_val == 0) {
+						return new IntConst(0);
+					} else if(r_val == 1) {
+						return left;
+					}
+					break;
 				case B_PLUS:
-					return left;
+					if(r_val == 0) {
+						return left;
+					}
+					break;
 				case B_MINUS:
-					return left;
+					if(r_val == 0) {
+						return left;
+					}
+					break;
+				case B_DIV:
+					if(r_val == 1) {
+						return left;
+					}
+					break;
 				}
 			}
 		}
