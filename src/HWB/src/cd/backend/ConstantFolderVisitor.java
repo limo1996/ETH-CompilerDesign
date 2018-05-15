@@ -9,10 +9,28 @@ import cd.ir.AstRewriteVisitor;
 import cd.ir.BasicBlock;
 import cd.ir.Ast.*;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
+import cd.util.debug.AstOneLine;
 import cd.ir.Ast;
 
 public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 
+	@Override
+	public Ast methodDecl(MethodDecl ast, Void arg) {	
+		if(ast.cfg == null) {
+			visit(ast.body(), arg);
+		} else {
+			for(BasicBlock bb : ast.cfg.allBlocks) {
+				if(bb.condition != null)
+					bb.condition = (Expr) visit(bb.condition, arg);
+				
+				for(Stmt stmt : bb.stmts) {
+					visit(stmt, arg);
+				}
+			}
+		}
+		return ast;
+	}
+	
 	/**
 	 * In unary op. we need to check whether we know the actual value at compile time.
 	 * If yes we do the optimization.
@@ -33,15 +51,27 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 				val = !val;
 			}
 			to_ret = new BooleanConst(val);
+		} else if(arg_e instanceof UnaryOp) {
+			UnaryOp nested = (UnaryOp)arg_e;
+			if(ast.operator.equals(UnaryOp.UOp.U_MINUS) && nested.operator.equals(UnaryOp.UOp.U_MINUS)) {
+				return nested.arg();
+			} else if((ast.operator.equals(UnaryOp.UOp.U_PLUS) && nested.operator.equals(UnaryOp.UOp.U_MINUS)) ||
+					ast.operator.equals(UnaryOp.UOp.U_MINUS) && nested.operator.equals(UnaryOp.UOp.U_PLUS)) {
+				return new UnaryOp(UnaryOp.UOp.U_MINUS, nested.arg());
+			} else if(ast.operator.equals(UnaryOp.UOp.U_PLUS) && nested.operator.equals(UnaryOp.UOp.U_PLUS)) {
+				return nested.arg();
+			} else if(ast.operator.equals(UnaryOp.UOp.U_BOOL_NOT) && nested.operator.equals(UnaryOp.UOp.U_BOOL_NOT)) {
+				return nested.arg();
+			}
 		}
 		return to_ret;
 	}
-	
+	@Override
 	public Ast assign(Ast.Assign ast, Void arg) {
 		ast.setRight((Expr)visit(ast.right(), arg));
 		return ast;
 	}
-	
+	@Override
 	public Ast classDecl(Ast.ClassDecl ast, Void arg) {
 		return visitChildren(ast, arg);
 	}
@@ -71,6 +101,7 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 		if(left instanceof IntConst && right instanceof IntConst) {
 			int left_v = ((IntConst)left).value;
 			int right_v = ((IntConst)right).value;
+			//System.out.println(left_v + " " + right_v);
 			switch(ast.operator) {
 				case B_TIMES:
 					return new IntConst(left_v * right_v);
@@ -79,8 +110,18 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 				case B_MINUS:
 					return new IntConst(left_v - right_v);
 				case B_DIV:
+					if(right_v == 0) {
+						ast.setLeft((Expr)left);
+						ast.setRight((Expr)right);
+						return ast;
+					}
 					return new IntConst(left_v / right_v);
 				case B_MOD:
+					if(right_v == 0) {
+						ast.setLeft((Expr)left);
+						ast.setRight((Expr)right);
+						return ast;
+					}
 					return new IntConst(left_v % right_v);
 				case B_LESS_THAN:
 					return new BooleanConst(left_v < right_v);
