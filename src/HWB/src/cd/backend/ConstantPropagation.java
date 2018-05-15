@@ -20,7 +20,7 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 	@Override
 	public Ast methodDecl(MethodDecl ast, Context arg) {
 		ReachingAnalysis ra = new ReachingAnalysis(ast.cfg, ast);
-		
+		//ra.print();
 		for(BasicBlock block : ast.cfg.allBlocks) {
 			if(block.condition != null) {
 				block.condition = (Expr)visit(block.condition, new Context(ra, block, block.stmts.size()));
@@ -40,12 +40,12 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 	}
 	
 	public Ast var(Ast.Var ast, Context arg) {
-		if(!ast.sym.kind.equals(VariableSymbol.Kind.FIELD)) {
+		if(ast.sym.kind.equals(VariableSymbol.Kind.LOCAL) && ast.type instanceof PrimitiveTypeSymbol) {
 			Expr repr = definition(ast.name, arg.curr_block, arg.curr_an, arg.stmt_index);
 			if(repr == null)
 				return ast;
 			if(repr instanceof IntConst) {
-				//System.out.println("Propageted int!");
+				//System.out.println(ast.name + " Propagated!");
 				return (IntConst)repr;
 			} else if(repr instanceof BooleanConst) {
 				//System.out.println("Propagated bool!");
@@ -57,29 +57,17 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 	
 	private Expr definition(String var, BasicBlock bb, ReachingAnalysis ra, int i) {
 		Expr reach = null;
-		/*List<Expr> ins = new ArrayList<Expr>();
+		List<Expr> ins = new ArrayList<Expr>();
 		for(Definition d : ra.inStates.get(bb)){
-			if(d.var.equals(var))
+			if(d.var.equals(var)) {
 				ins.add(d.expr);
+			}
 		}
+		assert(ins.size() > 0);
 		if(ins.size() == 1)
 			reach = ins.get(0);
 		else 
-			reach = new Var("asdskjfnksfnjks");
-		System.out.println(bb.condition);
-		for(Stmt s : bb.stmts) {
-			System.out.println(AstOneLine.toString(s));
-		}
-		//System.out.println(bb.predecessors.size() + " " + bb.successors.size());
-		if(bb.predecessors.size() > 1)
-			reach = new Var("asdskjfnksfnjks");*/
-		
-		/*for(int ii = 1; ii < ins.size(); ii++) {
-			if(!(ins.get(ii) instanceof IntConst) && !(ins.get(ii) instanceof BooleanConst)){
-				reach = ins.get(ii);
-				break;
-			}
-		}*/
+			reach = null;
 		
 		for(int it = i - 1; it >= 0; it--) {
 			Stmt st = bb.stmts.get(it);
@@ -91,9 +79,6 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 				}
 			}
 		}
-		
-		//if(reach == null)//uninitialized
-		//	reach = new IntConst(0); // but asm initializes to 0
 		
 		/*Ast stmt = i < bb.stmts.size() ? bb.stmts.get(i) : bb.condition;
 		System.out.println("Variable " + var + " in statement: \n" + 

@@ -4,6 +4,7 @@ import cd.ir.Ast.*;
 import cd.ir.BasicBlock;
 import cd.ir.ControlFlowGraph;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
+import cd.ir.Symbol.VariableSymbol;
 import cd.ir.Symbol.VariableSymbol.Kind;
 import cd.util.debug.AstOneLine;
 import cd.ir.Ast;
@@ -17,8 +18,8 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 	public ReachingAnalysis(ControlFlowGraph cfg, MethodDecl md) {
 		super(cfg);
 		this.md = md;
-		//this.init_state = this.getInitSet();
-		
+		this.init_state = this.getInitSet();
+		Map<Assign, Definition> as_def = new HashMap<Assign, Definition>();
 		// Figure out gens.
 		for (BasicBlock block : cfg.allBlocks) {
 
@@ -27,7 +28,7 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 			for (Stmt stmt : block.stmts) {
 				if (stmt instanceof Assign && ((Assign) stmt).left() instanceof Var) {
 					Definition def = new Definition((Assign) stmt);
-
+					as_def.put((Assign)stmt, def);
 					// Replaces all previous definitions if they exist.
 					defs.put(def.var, def);
 				}
@@ -47,10 +48,15 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 					if (otherBlock != block) {
 						for (Definition otherDef : gen.get(otherBlock)) {
 							if (def.var.equals(otherDef.var)) {
-								assert otherDef != null;
 								kill.add(otherDef);
 							}
 						}
+					}
+				}
+				
+				for (Definition init_def : this.init_state) {
+					if (def.var.equals(init_def.var)) {
+						kill.add(init_def);
 					}
 				}
 			}
@@ -68,8 +74,7 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 							Assign asg2 = (Assign) stmt2;
 							String var2 = ((Var)asg2.left()).name;
 							if(var2.equals(var)) {
-								Definition toKill = new Definition(asg2);
-								assert toKill != null;
+								Definition toKill = as_def.get(asg2);
 								kill.add(toKill);
 								break;
 							}
@@ -91,13 +96,19 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 		for(VarDecl decl: md.decls().childrenOfType(VarDecl.class)) {
 			if(decl.sym.type instanceof PrimitiveTypeSymbol) {
 				if(decl.sym.type.equals(PrimitiveTypeSymbol.intType)) {
-					defs.add(new Definition(new Assign(new Var(decl.name), new IntConst(0))));
+					defs.add(new Definition(new Assign(getLocalVar(decl.name, false), new IntConst(0))));
 				} else if (decl.sym.type.equals(PrimitiveTypeSymbol.booleanType)) {
-					defs.add(new Definition(new Assign(new Var(decl.name), new BooleanConst(false))));
+					defs.add(new Definition(new Assign(getLocalVar(decl.name, true), new BooleanConst(false))));
 				}
 			}
 		}
 		return defs;
+	}
+	
+	private Var getLocalVar(String name, boolean bool) {
+		if(!bool)
+			return Var.withSym(new VariableSymbol(name, PrimitiveTypeSymbol.intType, VariableSymbol.Kind.LOCAL));
+		return Var.withSym(new VariableSymbol(name, PrimitiveTypeSymbol.booleanType, VariableSymbol.Kind.LOCAL));
 	}
 	
 	public void print() {
@@ -114,15 +125,6 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 			System.out.println("--------------");
 		}
 	}
-	
-	private Definition getDef(Assign asg, Set<Definition> defs) {
-		for(Definition def : defs) {
-			System.out.println(AstOneLine.toString(def.assign) + " == " + AstOneLine.toString(asg) + " ==> " + def.assign.equals(asg));
-			if(def.assign.equals(asg))
-				return def;
-		}
-		return null;
-	}
 
 
 	public Map<BasicBlock, Set<Definition>> gen = new HashMap<BasicBlock, Set<Definition>>();
@@ -138,8 +140,8 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 
 	@Override
 	protected Set<Definition> startState() {
-		return new HashSet<Definition>();
-		//return this.init_state;
+		//return new HashSet<Definition>();
+		return this.init_state;
 	}
 
 

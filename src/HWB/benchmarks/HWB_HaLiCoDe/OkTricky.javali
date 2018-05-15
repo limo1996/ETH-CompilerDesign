@@ -1,0 +1,56 @@
+// Test everything
+class Main {
+   void main() {
+	int a, i;
+	while(a < 10){
+		a = a + 1;
+		write(i);
+		i = 100;
+	}
+	testArrays();
+	testFields();
+	testIfs();
+   }
+
+   void testArrays() {
+	int[] a1, a2;
+	int i, SIZE;
+	SIZE = 10 * 2;
+	a1 = new int[SIZE];
+	a2 = new int[9*34];
+	while(i < 0){
+		a1[i] = i * 10;
+		i = i + 1;
+	}
+	write(i);
+   }
+
+   void testFields(){
+	AA aa1, aa2;
+	aa1 = new AA();
+	aa1.a = 2;
+	aa2 = aa1;
+	aa2.a = 3;
+	write(aa1.a);
+   }
+
+   void testIfs(){
+	int i, a;
+	a = 3;
+	if(a == 4){
+		if(a * i + 10 == 9){
+			i = 10;
+		} else {
+			a = 4;
+		}
+	}
+	write(i);
+	write(a);
+   }
+   
+}
+
+class AA {
+	int a;
+}
+
