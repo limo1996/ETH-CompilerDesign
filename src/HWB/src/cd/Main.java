@@ -16,6 +16,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import cd.backend.ConstantFolderVisitor;
+import cd.backend.ConstantPropagation;
+import cd.backend.RedundantChecker;
 import cd.backend.codegen.CfgCodeGenerator;
 import cd.frontend.parser.JavaliAstVisitor;
 import cd.frontend.parser.JavaliLexer;
@@ -28,6 +30,7 @@ import cd.ir.Ast.MethodDecl;
 import cd.ir.Symbol;
 import cd.ir.Symbol.TypeSymbol;
 import cd.transform.CfgBuilder;
+import cd.transform.analysis.ReachingAnalysis;
 import cd.util.debug.AstDump;
 import cd.util.debug.CfgDump;
 
@@ -126,14 +129,21 @@ public class Main {
 
 		// constant folding 
 		ConstantFolderVisitor constV = new ConstantFolderVisitor();
-		for(ClassDecl cd: astRoots) {
+		RedundantChecker checker = new RedundantChecker();
+		ConstantPropagation constP = new ConstantPropagation();
+		
+		// Build control flow graph:
+		for (ClassDecl cd : astRoots) {
+			constV.visit(cd, null);
+			for (MethodDecl md : cd.methods()) {
+				new CfgBuilder().build(md);
+				//checker.methodDecl(md, null);
+				//ReachingAnalysis ra = new ReachingAnalysis(md.cfg);
+				//ra.print();
+				constP.methodDecl(md, null);
+			}
 			constV.visit(cd, null);
 		}
-
-		// Build control flow graph:
-		for (ClassDecl cd : astRoots)
-			for (MethodDecl md : cd.methods())
-				new CfgBuilder().build(md);
 		CfgDump.toString(astRoots, ".cfg", cfgdumpbase, false);
 	}
 
