@@ -7,6 +7,7 @@ import cd.ir.Symbol.VariableSymbol;
 import cd.util.debug.AstOneLine;
 import cd.ir.Ast;
 import cd.ir.BasicBlock;
+import cd.ir.Symbol;
 
 public class UnusedFinder {
 	private ExprFinder finder;
@@ -42,7 +43,7 @@ public class UnusedFinder {
 					((Var)((Assign)bb.stmts.get(i)).left()).sym.kind == VariableSymbol.Kind.LOCAL &&
 					!finder.find(bb.stmts.get(i), "[methodCall]") && !finder.find(bb.stmts.get(i), "read")
 					&& !finder.find(bb.stmts.get(i), "(cast)") && !finder.find(bb.stmts.get(i), "[index]")
-					&& !finder.find(bb.stmts.get(i), "[new]")) {
+					&& !finder.find(bb.stmts.get(i), "[new]") && !finder.find(bb.stmts.get(0), "[newO]")) {
 				//System.out.println(AstOneLine.toString(bb.stmts.get(i)) + " removed");
 				bb.stmts.remove(i);
 			}
@@ -53,11 +54,15 @@ public class UnusedFinder {
 		}
 	}
 	
-	// return all local variables in method
+	// return all local variables in a method
 	private List<String> getVariables(MethodDecl ast){
 		List<String> vars = new ArrayList<String>();
-		for(VarDecl v : ast.decls().childrenOfType(VarDecl.class))
-			vars.add(v.name);
+		for(VarDecl v : ast.decls().childrenOfType(VarDecl.class)) {
+			if(v.sym.type instanceof Symbol.PrimitiveTypeSymbol) {
+				vars.add(v.name);
+			}
+		}
+		
 		return vars;
 	}
 	
@@ -67,20 +72,19 @@ public class UnusedFinder {
 			return false;
 		visited.add(bb);
 		
-		boolean find = false;
 		for(int i = index; i < bb.stmts.size(); i++) {
-			find = find || finder.find(bb.stmts.get(i), var);
+			if(finder.find(bb.stmts.get(i), var))
+				return true;
 		}
 		
-		if(bb.condition != null) {
-			find = find || finder.find(bb.condition, var);
+		if(bb.condition != null && finder.find(bb.condition, var)) {
+			return true;
 		}
 		
-		if(!find){
-			for(BasicBlock block : bb.successors) {
-				find = find || find(block, 0, var, visited);
-			}
+		for(BasicBlock block : bb.successors) {
+			if(find(block, 0, var, visited))
+				return true;
 		}
-		return find;
+		return false;
 	}
 }

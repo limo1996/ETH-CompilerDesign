@@ -1,0 +1,15 @@
+class Main {
+	void main(){
+		A aa, bb;
+		aa = new A();
+		aa.a = 4;
+		bb = aa;
+		bb.a = 5;
+		write(aa.a);
+	}
+}
+
+class A {
+	int a;
+	boolean b;
+}

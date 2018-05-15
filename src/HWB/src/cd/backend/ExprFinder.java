@@ -79,6 +79,8 @@ import cd.ir.Symbol.VariableSymbol;
 		
 		@Override
 		public Boolean newObject(Ast.NewObject ast, String arg) {
+			if(arg.equals("[newO]"))
+				return true;
 			return false;
 		}
 
