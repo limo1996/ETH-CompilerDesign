@@ -4,6 +4,7 @@ import cd.ir.Ast.*;
 import cd.ir.BasicBlock;
 import cd.ir.ControlFlowGraph;
 import cd.ir.Symbol.VariableSymbol.Kind;
+import cd.util.debug.AstOneLine;
 import cd.ir.Ast;
 
 import java.util.*;
@@ -32,9 +33,6 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 			this.gen.put(block, gen);
 		}
 		// Figure out kills.
-
-		// TODO Kills from own block? e.g. x = 1; x = 2;
-
 		for (BasicBlock block : cfg.allBlocks) {
 			Set<Definition> kill = new HashSet<Definition>();
 			for (Definition def : gen.get(block)) {
@@ -44,22 +42,72 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 					if (otherBlock != block) {
 						for (Definition otherDef : gen.get(otherBlock)) {
 							if (def.var.equals(otherDef.var)) {
+								assert otherDef != null;
 								kill.add(otherDef);
 							}
 						}
 					}
 				}
 			}
+			
+			// Kills from own block
+			for(int i = 0; i < block.stmts.size(); i++) {
+				Stmt stmt = block.stmts.get(i);
+				if (stmt instanceof Assign && ((Assign) stmt).left() instanceof Var) {
+					Assign asg = (Assign)stmt;
+					String var = ((Var)asg.left()).name;
+					int curr = i - 1;
+					while(curr >= 0) {
+						Stmt stmt2 = block.stmts.get(curr);
+						if (stmt2 instanceof Assign && ((Assign) stmt2).left() instanceof Var) {
+							Assign asg2 = (Assign) stmt2;
+							String var2 = ((Var)asg2.left()).name;
+							if(var2.equals(var)) {
+								Definition toKill = new Definition(asg2);
+								assert toKill != null;
+								kill.add(toKill);
+								break;
+							}
+						}
+						curr--;
+					}
+				}
+			}
+			
 			this.kill.put(block, kill);
 		}
 
 		iterate();
 		
 	}
+	
+	public void print() {
+		for (BasicBlock block : cfg.allBlocks) {
+			System.out.println("Block: " + block.index);
+			System.out.println("Gen:");
+			System.out.println(gen.get(block));
+			System.out.println("Kill:");
+			System.out.println(kill.get(block));
+			System.out.println("InStates:");
+			System.out.println(inStates.get(block));
+			System.out.println("OutStates:");
+			System.out.println(outStates.get(block));
+			System.out.println("--------------");
+		}
+	}
+	
+	private Definition getDef(Assign asg, Set<Definition> defs) {
+		for(Definition def : defs) {
+			System.out.println(AstOneLine.toString(def.assign) + " == " + AstOneLine.toString(asg) + " ==> " + def.assign.equals(asg));
+			if(def.assign.equals(asg))
+				return def;
+		}
+		return null;
+	}
 
 
-	private Map<BasicBlock, Set<Definition>> gen = new HashMap<BasicBlock, Set<Definition>>();
-	private Map<BasicBlock, Set<Definition>> kill = new HashMap<BasicBlock, Set<Definition>>();
+	public Map<BasicBlock, Set<Definition>> gen = new HashMap<BasicBlock, Set<Definition>>();
+	public Map<BasicBlock, Set<Definition>> kill = new HashMap<BasicBlock, Set<Definition>>();
 
 
 	@Override

@@ -23,8 +23,8 @@ import cd.ir.ControlFlowGraph;
 public abstract class DataFlowAnalysis<State> {
 
 	protected final ControlFlowGraph cfg;
-	private Map<BasicBlock, State> inStates;
-	private Map<BasicBlock, State> outStates;
+	public Map<BasicBlock, State> inStates;
+	public Map<BasicBlock, State> outStates;
 	
 	public DataFlowAnalysis(ControlFlowGraph cfg) {
 		this.cfg = cfg;
