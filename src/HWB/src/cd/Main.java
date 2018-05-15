@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import cd.backend.ConstantFolderVisitor;
 import cd.backend.ConstantPropagation;
 import cd.backend.RedundantChecker;
+import cd.backend.UnusedFinder;
 import cd.backend.codegen.CfgCodeGenerator;
 import cd.frontend.parser.JavaliAstVisitor;
 import cd.frontend.parser.JavaliLexer;
@@ -129,8 +130,12 @@ public class Main {
 
 		// constant folding 
 		ConstantFolderVisitor constV = new ConstantFolderVisitor();
+		// redundancy within a method
 		RedundantChecker checker = new RedundantChecker();
+		// constant propagation
 		ConstantPropagation constP = new ConstantPropagation();
+		// unused variables removal
+		UnusedFinder unused = new UnusedFinder();
 		
 		// Build control flow graph:
 		for (ClassDecl cd : astRoots) {
@@ -138,9 +143,8 @@ public class Main {
 			for (MethodDecl md : cd.methods()) {
 				new CfgBuilder().build(md);
 				//checker.methodDecl(md, null);
-				//ReachingAnalysis ra = new ReachingAnalysis(md.cfg);
-				//ra.print();
 				constP.methodDecl(md, null);
+				unused.process(md);
 			}
 			constV.visit(cd, null);
 		}
