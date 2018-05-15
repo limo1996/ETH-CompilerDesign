@@ -19,7 +19,7 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 
 	@Override
 	public Ast methodDecl(MethodDecl ast, Context arg) {
-		ReachingAnalysis ra = new ReachingAnalysis(ast.cfg);
+		ReachingAnalysis ra = new ReachingAnalysis(ast.cfg, ast);
 		
 		for(BasicBlock block : ast.cfg.allBlocks) {
 			if(block.condition != null) {

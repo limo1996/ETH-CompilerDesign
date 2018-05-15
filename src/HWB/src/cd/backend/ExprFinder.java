@@ -50,7 +50,7 @@ import cd.ir.Symbol.VariableSymbol;
 		
 		@Override
 		public Boolean methodCall(Ast.MethodCallExpr ast, String arg) {
-			if(arg.equals("methodCall"))
+			if(arg.equals("[methodCall]"))
 				return true;
 			
 			boolean res = false;
@@ -62,6 +62,8 @@ import cd.ir.Symbol.VariableSymbol;
 		
 		@Override
 		public Boolean index(Ast.Index ast, String arg) {
+			if(arg.equals("[index]"))
+				return true;
 			return visit(ast.left(), arg) || visit(ast.right(), arg);
 		}
 		
@@ -82,6 +84,9 @@ import cd.ir.Symbol.VariableSymbol;
 
 		@Override
 		public Boolean newArray(Ast.NewArray ast, String arg) {
+			if(arg.equals("[new]")) {
+				return true;
+			}
 			return visit(ast.arg(), arg);
 		}
 		
@@ -93,6 +98,13 @@ import cd.ir.Symbol.VariableSymbol;
 		@Override
 		public Boolean binaryOp(Ast.BinaryOp ast, String arg) {
 			return visit(ast.left(),arg) || visit(ast.right(), arg);
+		}
+		
+		@Override
+		public Boolean cast(Ast.Cast ast, String arg) {
+			if(arg.equals("(cast)"))
+				return true;
+			return visit(ast.arg(), arg);
 		}
 		
 		@Override
@@ -112,6 +124,7 @@ import cd.ir.Symbol.VariableSymbol;
 			return visit(ast.arg(), arg);
 		}
 
+		@Override
 		public Boolean methodCall(Ast.MethodCall ast, String arg) {
 			return visit(ast.getMethodCallExpr(), arg);
 		}

@@ -3,6 +3,7 @@ package cd.backend;
 import java.util.*;
 
 import cd.ir.Ast.*;
+import cd.ir.Symbol.VariableSymbol;
 import cd.util.debug.AstOneLine;
 import cd.ir.Ast;
 import cd.ir.BasicBlock;
@@ -38,7 +39,10 @@ public class UnusedFinder {
 			//System.out.println("Variable " + var + " occures: " + occurs + " after statement " + AstOneLine.toString(bb.stmts.get(i)));
 			if(!occurs && bb.stmts.get(i) instanceof Assign && ((Assign)bb.stmts.get(i)).left() instanceof Var
 					&& ((Var)((Assign)bb.stmts.get(i)).left()).name.equals(var) &&
-					!finder.find(bb.stmts.get(i), "methodCall") && !finder.find(bb.stmts.get(i), "read")) {
+					((Var)((Assign)bb.stmts.get(i)).left()).sym.kind == VariableSymbol.Kind.LOCAL &&
+					!finder.find(bb.stmts.get(i), "[methodCall]") && !finder.find(bb.stmts.get(i), "read")
+					&& !finder.find(bb.stmts.get(i), "(cast)") && !finder.find(bb.stmts.get(i), "[index]")
+					&& !finder.find(bb.stmts.get(i), "[new]")) {
 				//System.out.println(AstOneLine.toString(bb.stmts.get(i)) + " removed");
 				bb.stmts.remove(i);
 			}

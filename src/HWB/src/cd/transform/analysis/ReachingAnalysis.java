@@ -3,6 +3,7 @@ package cd.transform.analysis;
 import cd.ir.Ast.*;
 import cd.ir.BasicBlock;
 import cd.ir.ControlFlowGraph;
+import cd.ir.Symbol.PrimitiveTypeSymbol;
 import cd.ir.Symbol.VariableSymbol.Kind;
 import cd.util.debug.AstOneLine;
 import cd.ir.Ast;
@@ -10,9 +11,13 @@ import cd.ir.Ast;
 import java.util.*;
 
 public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
+	private MethodDecl md;
+	private Set<Definition> init_state;
 	
-	public ReachingAnalysis(ControlFlowGraph cfg) {
+	public ReachingAnalysis(ControlFlowGraph cfg, MethodDecl md) {
 		super(cfg);
+		this.md = md;
+		//this.init_state = this.getInitSet();
 		
 		// Figure out gens.
 		for (BasicBlock block : cfg.allBlocks) {
@@ -81,6 +86,20 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 		
 	}
 	
+	private Set<Definition> getInitSet(){
+		Set<Definition> defs = new HashSet<Definition>();
+		for(VarDecl decl: md.decls().childrenOfType(VarDecl.class)) {
+			if(decl.sym.type instanceof PrimitiveTypeSymbol) {
+				if(decl.sym.type.equals(PrimitiveTypeSymbol.intType)) {
+					defs.add(new Definition(new Assign(new Var(decl.name), new IntConst(0))));
+				} else if (decl.sym.type.equals(PrimitiveTypeSymbol.booleanType)) {
+					defs.add(new Definition(new Assign(new Var(decl.name), new BooleanConst(false))));
+				}
+			}
+		}
+		return defs;
+	}
+	
 	public void print() {
 		for (BasicBlock block : cfg.allBlocks) {
 			System.out.println("Block: " + block.index);
@@ -112,15 +131,15 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 
 	@Override
 	protected Set<Definition> initialState() {
-		// TODO Auto-generated method stub
 		return new HashSet<Definition>();
+		//return this.init_state;
 	}
 
 
 	@Override
 	protected Set<Definition> startState() {
-		// TODO Auto-generated method stub
 		return new HashSet<Definition>();
+		//return this.init_state;
 	}
 
 

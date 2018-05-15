@@ -1,0 +1,10 @@
+class Main{
+	void main() {
+		A aa;
+		aa.a = 10;
+	}
+}
+
+class A {
+	int a;
+}
