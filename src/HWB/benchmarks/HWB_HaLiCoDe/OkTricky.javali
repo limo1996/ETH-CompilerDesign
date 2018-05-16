@@ -61,6 +61,7 @@ class Main {
    void testUnusedDivByZero(){
 	int a;
 	a = 5;
+	//write(a);
 	a = a / 0;
    }
    

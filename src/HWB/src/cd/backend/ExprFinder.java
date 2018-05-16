@@ -16,6 +16,18 @@ import cd.ir.Symbol.VariableSymbol;
 			return visit(expr, var);
 		}
 		
+		public Boolean onlyPrimitive(Stmt stmt) {
+			return visit(stmt, "[Primitive]");
+		}
+		
+		@Override
+		public Boolean field(Ast.Field ast, String var) {
+			if(var.equals("[field]"))
+				return true;
+			
+			return visit(ast.arg(), var);
+		}
+		
 		@Override
 		public Boolean assign(Ast.Assign ast, String var) {
 			//System.out.println("Assign ");
