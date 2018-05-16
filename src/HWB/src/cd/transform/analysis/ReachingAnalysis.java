@@ -15,6 +15,10 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 	private MethodDecl md;
 	private Set<Definition> init_state;
 	
+	/*
+	 * TODO: - parameters init state => x=x
+	 *  	 - other variables x = null
+	 */
 	public ReachingAnalysis(ControlFlowGraph cfg, MethodDecl md) {
 		super(cfg);
 		this.md = md;
@@ -102,6 +106,16 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 				}
 			}
 		}
+		
+		for(int i = 0; i < md.argumentNames.size(); i++) {
+			if(md.argumentTypes.get(i).equals("int")) {
+				Var param = getParamVar(md.argumentNames.get(i), false);
+				defs.add(new Definition(new Assign(param, param)));
+			} else if(md.argumentTypes.get(i).equals("boolean")) {
+				Var param = getParamVar(md.argumentNames.get(i), true);
+				defs.add(new Definition(new Assign(param, param)));
+			}
+		}
 		return defs;
 	}
 	
@@ -109,6 +123,12 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 		if(!bool)
 			return Var.withSym(new VariableSymbol(name, PrimitiveTypeSymbol.intType, VariableSymbol.Kind.LOCAL));
 		return Var.withSym(new VariableSymbol(name, PrimitiveTypeSymbol.booleanType, VariableSymbol.Kind.LOCAL));
+	}
+	
+	private Var getParamVar(String name, boolean bool) {
+		if(!bool)
+			return Var.withSym(new VariableSymbol(name, PrimitiveTypeSymbol.intType, VariableSymbol.Kind.PARAM));
+		return Var.withSym(new VariableSymbol(name, PrimitiveTypeSymbol.booleanType, VariableSymbol.Kind.PARAM));
 	}
 	
 	public void print() {
@@ -134,13 +154,11 @@ public class ReachingAnalysis extends DataFlowAnalysis<Set<Definition>>{
 	@Override
 	protected Set<Definition> initialState() {
 		return new HashSet<Definition>();
-		//return this.init_state;
 	}
 
 
 	@Override
 	protected Set<Definition> startState() {
-		//return new HashSet<Definition>();
 		return this.init_state;
 	}
 

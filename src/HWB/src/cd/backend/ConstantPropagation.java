@@ -20,7 +20,6 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 	@Override
 	public Ast methodDecl(MethodDecl ast, Context arg) {
 		ReachingAnalysis ra = new ReachingAnalysis(ast.cfg, ast);
-		//ra.print();
 		for(BasicBlock block : ast.cfg.allBlocks) {
 			if(block.condition != null) {
 				block.condition = (Expr)visit(block.condition, new Context(ra, block, block.stmts.size()));
@@ -39,22 +38,29 @@ public class ConstantPropagation extends AstRewriteVisitor<Context> {
 		return ast;
 	}
 	
+	/**
+	 * Visits variable and if its not field and primitive type it tries to propagate value.
+	 */
+	@Override
 	public Ast var(Ast.Var ast, Context arg) {
-		if(ast.sym.kind.equals(VariableSymbol.Kind.LOCAL) && ast.type instanceof PrimitiveTypeSymbol) {
+		if(!ast.sym.kind.equals(VariableSymbol.Kind.FIELD) && ast.type instanceof PrimitiveTypeSymbol) {
 			Expr repr = definition(ast.name, arg.curr_block, arg.curr_an, arg.stmt_index);
 			if(repr == null)
 				return ast;
 			if(repr instanceof IntConst) {
-				//System.out.println(ast.name + " Propagated!");
 				return (IntConst)repr;
 			} else if(repr instanceof BooleanConst) {
-				//System.out.println("Propagated bool!");
 				return (BooleanConst)repr;
 			}
 		}
 		return ast;
 	}
 	
+	/** 
+	 * Finds the definition of variable. 
+	 * @return Returns null if there is more than one definition incoming 
+	 * into block and block itself contains no definition of it
+	 */
 	private Expr definition(String var, BasicBlock bb, ReachingAnalysis ra, int i) {
 		Expr reach = null;
 		List<Expr> ins = new ArrayList<Expr>();

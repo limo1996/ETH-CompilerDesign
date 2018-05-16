@@ -10,6 +10,8 @@ class Main {
 	testArrays();
 	testFields();
 	testIfs();
+	testParam(1, 2, 3);
+	testUnusedDivByZero();
    }
 
    void testArrays() {
@@ -46,6 +48,20 @@ class Main {
 	}
 	write(i);
 	write(a);
+   }
+
+   void testParam(int a, int b, int c) {
+	while(a < b) {
+		write(c);
+		write(a);
+		a = a + 1;
+		c = 100;
+	}
+   }
+   void testUnusedDivByZero(){
+	int a;
+	a = 5;
+	a = a / 0;
    }
    
 }

@@ -99,6 +99,11 @@ import cd.ir.Symbol.VariableSymbol;
 		
 		@Override
 		public Boolean binaryOp(Ast.BinaryOp ast, String arg) {
+			if(arg.equals("[div/0]")) {
+				if(ast.right() instanceof Ast.IntConst && ((Ast.IntConst)ast.right()).value == 0) {
+					return true;
+				}
+			}
 			return visit(ast.left(),arg) || visit(ast.right(), arg);
 		}
 		

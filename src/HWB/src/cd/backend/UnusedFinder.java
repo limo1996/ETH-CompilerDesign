@@ -43,7 +43,8 @@ public class UnusedFinder {
 					((Var)((Assign)bb.stmts.get(i)).left()).sym.kind == VariableSymbol.Kind.LOCAL &&
 					!finder.find(bb.stmts.get(i), "[methodCall]") && !finder.find(bb.stmts.get(i), "read")
 					&& !finder.find(bb.stmts.get(i), "(cast)") && !finder.find(bb.stmts.get(i), "[index]")
-					&& !finder.find(bb.stmts.get(i), "[new]") && !finder.find(bb.stmts.get(0), "[newO]")) {
+					&& !finder.find(bb.stmts.get(i), "[new]") && !finder.find(bb.stmts.get(0), "[newO]")
+					&& !finder.find(bb.stmts.get(i), "[div/0]")) {
 				//System.out.println(AstOneLine.toString(bb.stmts.get(i)) + " removed");
 				bb.stmts.remove(i);
 			}
@@ -60,6 +61,12 @@ public class UnusedFinder {
 		for(VarDecl v : ast.decls().childrenOfType(VarDecl.class)) {
 			if(v.sym.type instanceof Symbol.PrimitiveTypeSymbol) {
 				vars.add(v.name);
+			}
+		}
+		
+		for(int i = 0; i < ast.argumentNames.size(); i++) {
+			if(ast.argumentTypes.get(i).equals("int") || ast.argumentTypes.get(i).equals("boolean")) {
+				vars.add(ast.argumentNames.get(i));
 			}
 		}
 		

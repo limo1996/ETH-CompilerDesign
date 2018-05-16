@@ -144,7 +144,7 @@ public class Main {
 				new CfgBuilder().build(md);
 				//checker.methodDecl(md, null);
 				constP.methodDecl(md, null);
-				//unused.process(md);
+				unused.process(md);
 			}
 			constV.visit(cd, null);
 		}
