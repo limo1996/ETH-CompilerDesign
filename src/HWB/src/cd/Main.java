@@ -142,7 +142,7 @@ public class Main {
 			constV.visit(cd, null);
 			for (MethodDecl md : cd.methods()) {
 				new CfgBuilder().build(md);
-				//checker.methodDecl(md, null);
+				checker.methodDecl(md, null);
 				constP.methodDecl(md, null);
 				unused.process(md);
 			}

@@ -43,7 +43,7 @@ public class UnusedFinder {
 					((Var)((Assign)bb.stmts.get(i)).left()).sym.kind == VariableSymbol.Kind.LOCAL &&
 					!finder.find(bb.stmts.get(i), "[methodCall]") && !finder.find(bb.stmts.get(i), "read")
 					&& !finder.find(bb.stmts.get(i), "(cast)") && !finder.find(bb.stmts.get(i), "[index]")
-					&& !finder.find(bb.stmts.get(i), "[new]") && !finder.find(bb.stmts.get(0), "[newO]")
+					&& !finder.find(bb.stmts.get(i), "[new]") && !finder.find(bb.stmts.get(i), "[newO]")
 					&& !finder.find(bb.stmts.get(i), "[div/0]") && !finder.find(bb.stmts.get(i), "[field]")) {
 				//System.out.println(AstOneLine.toString(bb.stmts.get(i)) + " removed");
 				bb.stmts.remove(i);

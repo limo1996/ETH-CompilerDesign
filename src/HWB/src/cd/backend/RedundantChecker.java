@@ -12,9 +12,11 @@ import cd.ir.AstRewriteVisitor;
 import cd.ir.AstVisitor;
 import cd.ir.BasicBlock;
 import cd.ir.ControlFlowGraph;
+import cd.ir.Symbol;
 import cd.ir.Ast;
-import cd.ir.Ast.MethodDecl;
 import cd.ir.Ast.*;
+import cd.ir.Symbol.VariableSymbol;
+import cd.util.debug.AstOneLine;
 
 /**
  * Goal is to remove redundant expressions within the basic block.
@@ -50,9 +52,12 @@ public class RedundantChecker extends AstVisitor<Void, Void> {
 						while(curr >= 0 && !finder.find(blk.stmts.get(curr), var)) {
 							boolean isWrite = isWrite(blk.stmts.get(curr), var);
 							// if its write to variable
-							if(isWrite) {
+							if(isWrite && ((Var)((Assign)blk.stmts.get(curr)).left()).sym.kind == VariableSymbol.Kind.LOCAL) {
 								// if its not write of read (we can not skip input)
-								if(finder.find(blk.stmts.get(curr), "read") || !finder.find(blk.stmts.get(curr), "methodCall")) {
+								if(finder.find(blk.stmts.get(curr), "[methodCall]") || finder.find(blk.stmts.get(curr), "read")
+									|| finder.find(blk.stmts.get(curr), "(cast)") || finder.find(blk.stmts.get(curr), "[index]")
+									|| finder.find(blk.stmts.get(curr), "[new]") || finder.find(blk.stmts.get(curr), "[newO]")
+									|| finder.find(blk.stmts.get(curr), "[div/0]") || finder.find(blk.stmts.get(curr), "[field]")) {
 									firstWrite = true;
 								} else if(firstWrite) {
 									// if its not closest write we can remove it
@@ -65,7 +70,7 @@ public class RedundantChecker extends AstVisitor<Void, Void> {
 							curr--;
 						}
 					} 
-					if(isWrite(blk.stmts.get(i), var) && !finder.find(blk.stmts.get(i), var)) {
+					/*if(isWrite(blk.stmts.get(i), var) && !finder.find(blk.stmts.get(i), var)) {
 						//System.out.println("Starting " + blk.stmts.get(i) + " find of " + var + ": " + finder.find(blk.stmts.get(i), var));
 						int curr = i - 1;
 						while(curr >= 0 && !finder.find(blk.stmts.get(curr), var)) {
@@ -80,21 +85,35 @@ public class RedundantChecker extends AstVisitor<Void, Void> {
 							}
 							curr--;
 						}
-					}
+					}*/
 				}
 			}
+			//if(!toRemove.isEmpty())
+			//	System.out.println("Removed:");
+			
 			for(int i : toRemove.descendingSet()) {
+				//System.out.println(AstOneLine.toString(blk.stmts.get(i)));
 				blk.stmts.remove(i);
 			}
 		}
 		return null;
 	}
 	
-	// return all local variables in method
+	// return all local variables in a method
 	private List<String> getVariables(MethodDecl ast){
 		List<String> vars = new ArrayList<String>();
-		for(VarDecl v : ast.decls().childrenOfType(VarDecl.class))
-			vars.add(v.name);
+		for(VarDecl v : ast.decls().childrenOfType(VarDecl.class)) {
+			if(v.sym.type instanceof Symbol.PrimitiveTypeSymbol) {
+				vars.add(v.name);
+			}
+		}
+		
+		for(int i = 0; i < ast.argumentNames.size(); i++) {
+			if(ast.argumentTypes.get(i).equals("int") || ast.argumentTypes.get(i).equals("boolean")) {
+				vars.add(ast.argumentNames.get(i));
+			}
+		}
+		
 		return vars;
 	}
 	
