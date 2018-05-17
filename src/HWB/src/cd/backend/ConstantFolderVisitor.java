@@ -243,6 +243,46 @@ public class ConstantFolderVisitor extends AstRewriteVisitor<Void> {
 		}
 		ast.setLeft((Expr)left);
 		ast.setRight((Expr)right);
-		return ast;
+		return rebalanceInt((Expr)left, ast.operator, (Expr)right, ast);
+	}
+	
+	private BinaryOp rebalanceInt(Expr left, BinaryOp.BOp bop, Expr right, BinaryOp original) {
+		BinaryOp child;
+		IntConst con, con2;
+		if(left instanceof IntConst && right instanceof BinaryOp) {
+			con = (IntConst)left;
+			child = (BinaryOp)right;
+		} else if(left instanceof BinaryOp && right instanceof IntConst) {
+			con = (IntConst)right;
+			child = (BinaryOp)left;
+		} else {
+			return original;
+		}
+		
+		if(!bop.equals(BinaryOp.BOp.B_PLUS) && !bop.equals(BinaryOp.BOp.B_TIMES)) {
+			return original;
+		}
+		
+		Expr other;
+		if(child.left() instanceof IntConst) {
+			con2 = (IntConst)child.left();
+			other = child.right();
+		} else if(child.right() instanceof IntConst) {
+			con2 = (IntConst)child.right();
+			other = child.left();
+		} else {
+			return original;
+		}
+		if(!child.operator.equals(bop))
+			return original;
+		
+		//System.out.println("Rebalance applied on " + AstOneLine.toString(original));
+		original.setLeft(other);
+		if(bop.equals(BinaryOp.BOp.B_PLUS))
+			original.setRight(new IntConst(con.value + con2.value));
+		else
+			original.setRight(new IntConst(con.value * con2.value));
+		//System.out.println("to " + AstOneLine.toString(original));
+		return original;
 	}
 }

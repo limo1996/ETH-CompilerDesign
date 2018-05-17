@@ -1,0 +1,18 @@
+// Test everything
+class Main {
+   int a, b, c;
+   void main() {
+	Main m;
+	m = new Main();
+	a = 10;
+	c = 90;
+	b = 3;
+	b = a * c * b - b + a + c * a - a + b / a;
+	write(b);
+	m = this;
+	m.a = 9;
+	write(a);
+   }
+}
+
+
