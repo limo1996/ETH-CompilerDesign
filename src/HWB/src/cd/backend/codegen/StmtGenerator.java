@@ -20,31 +20,33 @@ import cd.ir.Ast.Index;
 import cd.ir.Ast.MethodCall;
 import cd.ir.Ast.MethodDecl;
 import cd.ir.Ast.ReturnStmt;
+import cd.ir.Ast.ThisRef;
 import cd.ir.Ast.Var;
 import cd.ir.Ast.WhileLoop;
 import cd.ir.AstVisitor;
 import cd.ir.ExprVisitor;
 import cd.ir.Symbol.MethodSymbol;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
+import cd.ir.Symbol.VariableSymbol;
 import cd.util.Pair;
 import cd.util.debug.AstOneLine;
 
 /**
  * Generates code to process statements and declarations.
  */
-class StmtGenerator extends AstVisitor<Register, Void> {
+class StmtGenerator extends AstVisitor<Register, CodeContext> {
 	protected final AstCodeGenerator cg;
 
 	StmtGenerator(AstCodeGenerator astCodeGenerator) {
 		cg = astCodeGenerator;
 	}
 
-	public void gen(Ast ast) {
-		visit(ast, null);
+	public void gen(Ast ast, CodeContext cc) {
+		visit(ast, cc);
 	}
 
 	@Override
-	public Register visit(Ast ast, Void arg) {
+	public Register visit(Ast ast, CodeContext arg) {
 		try {
 			cg.emit.increaseIndent("Emitting " + AstOneLine.toString(ast));
 			return super.visit(ast, arg);
@@ -74,8 +76,8 @@ class StmtGeneratorRef extends StmtGenerator {
 		this.cgRef = astCodeGenerator;
 	}
 
-	@Override
-	public Register methodCall(MethodSymbol mthSymbol, List<Expr> allArgs) {
+	//@Override
+	public Register methodCall(MethodSymbol mthSymbol, List<Expr> allArgs, CodeContext cc) {
 		// Push the arguments and the method prefix (caller save register,
 		// and padding) onto the stack.
 		// Note that the space for the arguments is not already reserved,
@@ -90,7 +92,7 @@ class StmtGeneratorRef extends StmtGenerator {
 			if (reg != null) {
 				cgRef.rm.releaseRegister(reg);
 			}
-			reg = cgRef.eg.gen(allArgs.get(i));
+			reg = cgRef.eg.gen(allArgs.get(i), cc);
 			cgRef.push(reg.repr);
 		}
 
@@ -99,11 +101,25 @@ class StmtGeneratorRef extends StmtGenerator {
 		cgRef.emit.emitComment("Load \"this\" pointer");
 		cgRef.emit.emitLoad((allArgs.size() - 1) * Config.SIZEOF_PTR, STACK_REG, reg);
 
-		// Check for a null receiver
-		int cnPadding = cgRef.emitCallPrefix(null, 1);
-		cgRef.push(reg.repr);
-		cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
-		cgRef.emitCallSuffix(null, 1, cnPadding);
+		Expr recv = allArgs.get(0);
+		assert recv != null;
+		if(!(recv instanceof ThisRef) && recv instanceof Var) {
+			Var recv2 = (Var)recv;
+			assert cc != null;
+			if((recv2.sym.kind == VariableSymbol.Kind.LOCAL && cc.needsNullCheck(recv2.name)) || recv2.sym.kind != VariableSymbol.Kind.LOCAL) {
+				// Check for a null receiver
+				int cnPadding = cgRef.emitCallPrefix(null, 1);
+				cgRef.push(reg.repr);
+				cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
+				cgRef.emitCallSuffix(null, 1, cnPadding);
+			}
+			else {
+				//System.out.println("Null check for: " + AstOneLine.toString(recv) + " saved");
+			}
+		}
+		else {
+			//System.out.println("Null check for: " + AstOneLine.toString(recv) + " saved");
+		}
 
 		// Load the address of the method to call into "reg"
 		// and call it indirectly.
@@ -122,8 +138,8 @@ class StmtGeneratorRef extends StmtGenerator {
 	}
 
 	@Override
-	public Register methodCall(MethodCall ast, Void dummy) {
-		Register reg = cgRef.eg.gen(ast.getMethodCallExpr());
+	public Register methodCall(MethodCall ast, CodeContext dummy) {
+		Register reg = cgRef.eg.gen(ast.getMethodCallExpr(), dummy);
 		if (reg != null)
 			cgRef.rm.releaseRegister(reg);
 
@@ -131,43 +147,43 @@ class StmtGeneratorRef extends StmtGenerator {
 	}
 	
 	@Override
-	public Register classDecl(ClassDecl ast, Void arg) {
+	public Register classDecl(ClassDecl ast, CodeContext arg) {
 		// Emit each method:
 		cgRef.emit.emitCommentSection("Class " + ast.name);
 		return visitChildren(ast, arg);
 	}
 
 	@Override
-	public Register methodDecl(MethodDecl ast, Void arg) {
+	public Register methodDecl(MethodDecl ast, CodeContext arg) {
 		cgRef.emitMethodPrefix(ast);
-		gen(ast.body());
+		gen(ast.body(), arg);
 		cgRef.emitMethodSuffix(false);
 		return null;
 	}
 
 	@Override
-	public Register ifElse(IfElse ast, Void arg) {
+	public Register ifElse(IfElse ast, CodeContext arg) {
 		String falseLbl = cgRef.emit.uniqueLabel();
 		String doneLbl = cgRef.emit.uniqueLabel();
 
-		cgRef.genJumpIfFalse(ast.condition(), falseLbl);
-		gen(ast.then());
+		cgRef.genJumpIfFalse(ast.condition(), falseLbl, arg);
+		gen(ast.then(), arg);
 		cgRef.emit.emit("jmp", doneLbl);
 		cgRef.emit.emitLabel(falseLbl);
-		gen(ast.otherwise());
+		gen(ast.otherwise(), arg);
 		cgRef.emit.emitLabel(doneLbl);
 
 		return null;
 	}
 
 	@Override
-	public Register whileLoop(WhileLoop ast, Void arg) {
+	public Register whileLoop(WhileLoop ast, CodeContext arg) {
 		String nextLbl = cgRef.emit.uniqueLabel();
 		String doneLbl = cgRef.emit.uniqueLabel();
 
 		cgRef.emit.emitLabel(nextLbl);
-		cgRef.genJumpIfFalse(ast.condition(), doneLbl);
-		gen(ast.body());
+		cgRef.genJumpIfFalse(ast.condition(), doneLbl, arg);
+		gen(ast.body(), arg);
 		cgRef.emit.emit("jmp", nextLbl);
 		cgRef.emit.emitLabel(doneLbl);
 
@@ -175,12 +191,12 @@ class StmtGeneratorRef extends StmtGenerator {
 	}
 
 	@Override
-	public Register assign(Assign ast, Void arg) {
+	public Register assign(Assign ast, CodeContext arg) {
 		class AssignVisitor extends ExprVisitor<Void, Expr> {
 
 			@Override
 			public Void var(Var ast, Expr right) {
-				final Register rhsReg = cgRef.eg.gen(right);
+				final Register rhsReg = cgRef.eg.gen(right, arg);
 				cgRef.emit.emitStore(rhsReg, ast.sym.offset, BASE_REG);
 				cgRef.rm.releaseRegister(rhsReg);
 				return null;
@@ -188,8 +204,8 @@ class StmtGeneratorRef extends StmtGenerator {
 
 			@Override
 			public Void field(Field ast, Expr right) {
-				final Register rhsReg = cgRef.eg.gen(right);
-				Pair<Register> regs = cgRef.egRef.genPushing(rhsReg, ast.arg());
+				final Register rhsReg = cgRef.eg.gen(right, arg);
+				Pair<Register> regs = cgRef.egRef.genPushing(rhsReg, ast.arg(), arg);
 				int padding = cgRef.emitCallPrefix(null, 1);
 				cgRef.push(regs.b.repr);
 				cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
@@ -204,9 +220,9 @@ class StmtGeneratorRef extends StmtGenerator {
 
 			@Override
 			public Void index(Index ast, Expr right) {
-				Register rhsReg = cgRef.egRef.gen(right);
+				Register rhsReg = cgRef.egRef.gen(right, arg);
 				
-				Pair<Register> regs = cgRef.egRef.genPushing(rhsReg, ast.left());
+				Pair<Register> regs = cgRef.egRef.genPushing(rhsReg, ast.left(), arg);
 				rhsReg = regs.a;
 				Register arrReg = regs.b;
 				int padding = cgRef.emitCallPrefix(null, 1);
@@ -214,7 +230,7 @@ class StmtGeneratorRef extends StmtGenerator {
 				cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
 				cgRef.emitCallSuffix(null, 1, padding);
 				
-				regs = cgRef.egRef.genPushing(arrReg, ast.right());
+				regs = cgRef.egRef.genPushing(arrReg, ast.right(), arg);
 				arrReg = regs.a;
 				Register idxReg = regs.b;
 				
@@ -245,8 +261,8 @@ class StmtGeneratorRef extends StmtGenerator {
 	}
 
 	@Override
-	public Register builtInWrite(BuiltInWrite ast, Void arg) {
-		Register reg = cgRef.eg.gen(ast.arg());
+	public Register builtInWrite(BuiltInWrite ast, CodeContext arg) {
+		Register reg = cgRef.eg.gen(ast.arg(), arg);
 		int padding = cgRef.emitCallPrefix(null, 1);
 		cgRef.push(reg.repr);
 		cgRef.emit.emit("call", AstCodeGeneratorRef.PRINT_INTEGER);
@@ -257,7 +273,7 @@ class StmtGeneratorRef extends StmtGenerator {
 	}
 
 	@Override
-	public Register builtInWriteln(BuiltInWriteln ast, Void arg) {
+	public Register builtInWriteln(BuiltInWriteln ast, CodeContext arg) {
 		int padding = cgRef.emitCallPrefix(null, 0);
 		cgRef.emit.emit("call", AstCodeGeneratorRef.PRINT_NEW_LINE);
 		cgRef.emitCallSuffix(null, 0, padding);
@@ -265,9 +281,9 @@ class StmtGeneratorRef extends StmtGenerator {
 	}
 
 	@Override
-	public Register returnStmt(ReturnStmt ast, Void arg) {
+	public Register returnStmt(ReturnStmt ast, CodeContext arg) {
 		if (ast.arg() != null) {
-			Register reg = cgRef.eg.gen(ast.arg());
+			Register reg = cgRef.eg.gen(ast.arg(), arg);
 			cgRef.emit.emitMove(reg, "%eax");
 			cgRef.emitMethodSuffix(false);
 			cgRef.rm.releaseRegister(reg);

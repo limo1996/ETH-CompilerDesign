@@ -5,8 +5,8 @@ import static cd.Config.SCANF;
 import static cd.Config.SIZEOF_PTR;
 import static cd.backend.codegen.AssemblyEmitter.constant;
 import static cd.backend.codegen.AssemblyEmitter.registerOffset;
-import static cd.backend.codegen.RegisterManager.BASE_REG;
 import static cd.backend.codegen.RegisterManager.STACK_REG;
+import static cd.backend.codegen.RegisterManager.BASE_REG;
 
 import java.io.Writer;
 import java.util.Collections;
@@ -14,7 +14,6 @@ import java.util.List;
 
 import cd.Config;
 import cd.Main;
-import cd.backend.ConstantFolderVisitor;
 import cd.backend.ExitCode;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast;
@@ -43,9 +42,7 @@ public class AstCodeGenerator {
 	protected StmtGeneratorRef sgRef;
 
 	AstCodeGenerator(Main main, Writer out) {
-		{
-			initMethodData();
-		}
+		initMethodData();
 		
 		this.emit = new AssemblyEmitter(out);
 		this.main = main;
@@ -63,7 +60,7 @@ public class AstCodeGenerator {
 		return new AstCodeGeneratorRef(main, out);
 	}
 	
-	
+
 	/**
 	 * Main method. Causes us to emit x86 assembly corresponding to {@code ast}
 	 * into {@code file}. Throws a {@link RuntimeException} should any I/O error
@@ -80,22 +77,21 @@ public class AstCodeGenerator {
 	 */
 	public void go(List<? extends ClassDecl> astRoots) {
 		for (ClassDecl ast : astRoots) {
-			sg.gen(ast);
+			sg.gen(ast, null);
 		}
 	}
 
 
 	protected void initMethodData() {
-		{
-			rm.initRegisters();
-		}
+		rm.initRegisters();
 	}
 
 
 	protected void emitMethodSuffix(boolean returnNull) {
 		if (returnNull)
 			emit.emit("movl", "$0", Register.EAX);
-		emit.emitRaw("leave");
+		emit.emitMove(BASE_REG, STACK_REG);
+		emit.emit("pop", BASE_REG);
 		emit.emitRaw("ret");
 	}
 }
@@ -199,7 +195,11 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			String faillbl = emit.uniqueLabel();
 			emit.emitCommentSection(CHECK_CAST + " function");
 			emit.emitLabel(CHECK_CAST);
-			emit.emit("enter", "$8", "$0");
+			
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emitLoad(SIZEOF_PTR * 2, BASE_REG, cls);
@@ -218,7 +218,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			emit.emitStore(constant(ExitCode.INVALID_DOWNCAST.value), 0, STACK_REG);
 			emit.emit("call", Config.EXIT);
 			emit.emitLabel(donelbl);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -227,7 +228,11 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			String oknulllbl = emit.uniqueLabel();
 			emit.emitCommentSection(CHECK_NULL + " function");
 			emit.emitLabel(CHECK_NULL);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emit("cmpl", constant(0), registerOffset(SIZEOF_PTR * 2, BASE_REG));
@@ -235,7 +240,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			emit.emitStore(constant(ExitCode.NULL_POINTER.value), 0, STACK_REG);
 			emit.emit("call", Config.EXIT);
 			emit.emitLabel(oknulllbl);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -244,7 +250,11 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			String oknzlbl = emit.uniqueLabel();
 			emit.emitCommentSection(CHECK_NON_ZERO + " function");
 			emit.emitLabel(CHECK_NON_ZERO);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emit("cmpl", constant(0), registerOffset(SIZEOF_PTR * 2, BASE_REG));
@@ -252,7 +262,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			emit.emitStore(constant(ExitCode.DIVISION_BY_ZERO.value), 0, STACK_REG);
 			emit.emit("call", Config.EXIT);
 			emit.emitLabel(oknzlbl);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -261,7 +272,11 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			String okunqlbl = emit.uniqueLabel();
 			emit.emitCommentSection(CHECK_ARRAY_SIZE + " function");
 			emit.emitLabel(CHECK_ARRAY_SIZE);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emit("cmpl", constant(0), registerOffset(SIZEOF_PTR * 2, BASE_REG));
@@ -269,7 +284,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			emit.emitStore(constant(ExitCode.INVALID_ARRAY_SIZE.value), 0, STACK_REG);
 			emit.emit("call", Config.EXIT);
 			emit.emitLabel(okunqlbl);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -280,7 +296,11 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			String faillbl = emit.uniqueLabel();
 			emit.emitCommentSection(CHECK_ARRAY_BOUNDS + " function");
 			emit.emitLabel(CHECK_ARRAY_BOUNDS);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emitLoad(SIZEOF_PTR * 3, BASE_REG, idx);
@@ -290,7 +310,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			emit.emit("cmpl", registerOffset(Config.SIZEOF_PTR, arr), idx); // idx >= len
 			emit.emit("jge", faillbl);
 			// done
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 			// fail
 			emit.emitLabel(faillbl);
@@ -304,14 +325,19 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			Register size = RegisterManager.CALLER_SAVE[0];
 			emit.emitCommentSection(ALLOC + " function");
 			emit.emitLabel(ALLOC);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emitLoad(8, BASE_REG, size);
 			emit.emitStore(size, 0, STACK_REG);
 			emit.emitStore(constant(1), 4, STACK_REG);
 			emit.emit("call", Config.CALLOC);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -319,12 +345,17 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 		{
 			emit.emitCommentSection(PRINT_NEW_LINE + " function");
 			emit.emitLabel(PRINT_NEW_LINE);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emitStore("$STR_NL", 0, STACK_REG);
 			emit.emit("call", Config.PRINTF);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -333,14 +364,19 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			Register temp = RegisterManager.CALLER_SAVE[0];
 			emit.emitCommentSection(PRINT_INTEGER + " function");
 			emit.emitLabel(PRINT_INTEGER);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emitLoad(8, BASE_REG, temp);
 			emit.emitStore(temp, 4, STACK_REG);
 			emit.emitStore("$STR_D", 0, STACK_REG);
 			emit.emit("call", Config.PRINTF);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -349,7 +385,11 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			Register number = RegisterManager.CALLER_SAVE[0];
 			emit.emitCommentSection(READ_INTEGER + " function");
 			emit.emitLabel(READ_INTEGER);
-			emit.emit("enter", "$8", "$0");
+
+			emit.emit("push", BASE_REG);
+			emit.emitMove(STACK_REG, BASE_REG);
+			emit.emit("sub", constant(8), STACK_REG);
+			
 			emit.emit("and", constant(-16), STACK_REG);
 			emit.emit("sub", constant(16), STACK_REG);
 			emit.emit("leal", registerOffset(8, STACK_REG), number);
@@ -357,7 +397,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 			emit.emitStore("$STR_D", 0, STACK_REG);
 			emit.emit("call", SCANF);
 			emit.emitLoad(8, STACK_REG, Register.EAX);
-			emit.emitRaw("leave");
+			emit.emitMove(BASE_REG, STACK_REG);
+			emit.emit("pop", BASE_REG);
 			emit.emitRaw("ret");
 		}
 
@@ -375,11 +416,16 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 		emit.emitCommentSection("main() function");
 		emit.emitRaw(".globl " + MAIN);
 		emit.emitLabel(MAIN);
-		emit.emit("enter", "$8", "$0");
+
+		emit.emit("push", BASE_REG);
+		emit.emitMove(STACK_REG, BASE_REG);
+		emit.emit("sub", constant(8), STACK_REG);
+		
 		emit.emit("and", -16, STACK_REG);
-		sg.gen(callMain);
+		sg.gen(callMain, null);
 		emit.emit("movl", constant(ExitCode.OK.value), Register.EAX); // normal termination:
-		emit.emitRaw("leave");
+		emit.emitMove(BASE_REG, STACK_REG);
+		emit.emit("pop", BASE_REG);
 		emit.emitRaw("ret");
 
 	}
@@ -575,10 +621,10 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 	 * the value generated for {@code ast} is false.
 	 */
 
-	protected void genJumpIfFalse(Expr ast, String lbl) {
+	protected void genJumpIfFalse(Expr ast, String lbl, CodeContext cc) {
 		// A better way to implement this would be with a separate
 		// visitor.
-		Register reg = eg.gen(ast);
+		Register reg = eg.gen(ast, cc);
 		emit.emit("cmpl", "$0", reg);
 		emit.emit("je", lbl);
 		rm.releaseRegister(reg);
@@ -596,7 +642,7 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 	protected int bytes = 0;
 
 	protected String methodLabel(MethodSymbol msym) {
-		return msym.owner.name + "_" + msym.name;
+		return "meth_" + msym.owner.name + "_" + msym.name;
 	}
 
 	protected void emitMethodPrefix(MethodDecl ast) {
@@ -685,7 +731,12 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 		emit.emitComment(String.format("implicit=%d localSlot=%d sum=%d", implicit,
 				localSlot, implicit + localSlot));
 
-		emit.emitRaw(String.format("enter $%d, $0", stackSize));
+
+		// emit.emitRaw(String.format("enter $%d, $0", stackSize));
+		emit.emit("push", BASE_REG);
+		emit.emitMove(STACK_REG, BASE_REG);
+		emit.emit("sub", constant(stackSize), STACK_REG);
+		
 		emit.emit("and", -16, STACK_REG);
 
 		storeCalleeSaveRegs();
@@ -701,7 +752,8 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 		if (returnNull)
 			emit.emit("movl", "$0", Register.EAX);
 		restoreCalleeSaveRegs();
-		emit.emitRaw("leave");
+		emit.emitMove(BASE_REG, STACK_REG);
+		emit.emit("pop", BASE_REG);
 		emit.emitRaw("ret");
 	}
 }

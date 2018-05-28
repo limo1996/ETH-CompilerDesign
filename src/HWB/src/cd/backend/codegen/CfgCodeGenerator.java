@@ -57,14 +57,20 @@ public class CfgCodeGenerator {
 			String exitLabel = cg.emit.uniqueLabel();
 			
 			cg.emit.emit("jmp", labels.get(cfg.start));
-
+			
+			CodeContext cc = new CodeContext();
+			cc.setMethod(ast);
 			for (BasicBlock blk : cfg.allBlocks) {
-				
+				cc.setBasicBlock(blk);
 				cg.emit.emitCommentSection("Basic block " + blk.index);
 				cg.emit.emitLabel(labels.get(blk));
 				
-				for(Stmt stmt : blk.stmts)
-					cg.sg.gen(stmt);
+				int counter = 0;
+				for(Stmt stmt : blk.stmts) {
+					cc.setStmtIndex(counter);
+					cg.sg.gen(stmt, cc);
+					counter++;
+				}
 				
 				if (blk == cfg.end) {
 					cg.emit.emitComment(String.format("Return"));
@@ -75,7 +81,7 @@ public class CfgCodeGenerator {
 					cg.emit.emitComment(String.format(
 							"Exit to block %d if true, block %d if false",
 							blk.trueSuccessor().index, blk.falseSuccessor().index));
-					cg.genJumpIfFalse(blk.condition, labels.get(blk.falseSuccessor()));
+					cg.genJumpIfFalse(blk.condition, labels.get(blk.falseSuccessor()), cc);
 					cg.emit.emit("jmp", labels.get(blk.trueSuccessor()));
 				} else {
 					cg.emit.emitComment(String.format(
