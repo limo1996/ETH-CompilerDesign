@@ -17,6 +17,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import cd.backend.ConstantFolderVisitor;
 import cd.backend.ConstantPropagation;
+import cd.backend.FieldPropagation;
 import cd.backend.RedundantChecker;
 import cd.backend.UnusedFinder;
 import cd.backend.codegen.CfgCodeGenerator;
@@ -136,15 +137,19 @@ public class Main {
 		ConstantPropagation constP = new ConstantPropagation();
 		// unused variables removal
 		UnusedFinder unused = new UnusedFinder();
+		// field propagation
+		FieldPropagation fields = new FieldPropagation();
 		
 		// Build control flow graph:
 		for (ClassDecl cd : astRoots) {
 			constV.visit(cd, null);
+			fields.setClass(cd);
 			for (MethodDecl md : cd.methods()) {
 				new CfgBuilder().build(md);
 				checker.methodDecl(md, null);
 				constP.methodDecl(md, null);
 				unused.process(md);
+				fields.methodDecl(md, null);
 			}
 			constV.visit(cd, null);
 		}

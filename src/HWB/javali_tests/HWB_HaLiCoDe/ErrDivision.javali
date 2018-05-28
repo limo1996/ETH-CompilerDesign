@@ -1,0 +1,8 @@
+class Main {
+	int a, b;
+	void main(){
+		a = 0;
+		b = 7;
+		write(b/a);
+	}
+}

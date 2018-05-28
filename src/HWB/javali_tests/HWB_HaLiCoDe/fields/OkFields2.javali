@@ -1,0 +1,38 @@
+// Test everything
+class Main {
+   int a, b, c;
+   void main() {
+	int[] aa;
+	Main m;
+	int i;
+	aa = new int[10];
+	m = new Main();
+	a = 10;
+	c = 90;
+	this.b = 3;
+	while(i < 10){
+		aa[i] = i * 90 + 9;
+		i = i + 1;
+	}
+	foo();
+	i = 0;
+	while(i < 10){
+		b = a * c * aa[i] - this.b + a + c * a - aa[i] + b / a;
+		write(b);
+		i = i + 1;
+	}
+
+	m = this;
+	m.a = 9;
+	write(a);
+   }
+
+	void foo(){
+		int a, b;
+		a = 90;
+		b = a * 90;
+		write(b);
+	}
+}
+
+

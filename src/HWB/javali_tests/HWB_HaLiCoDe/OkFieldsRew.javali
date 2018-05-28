@@ -1,0 +1,17 @@
+class Main {
+	int a, b, c;
+	void main(){
+		a = 0;
+		b = 7;
+		c = a * b;
+		foo();
+		write(c * a * b);
+		write(a + 90 - c);
+	}
+
+	void foo(){
+		this.a = 90;
+		this.b = 100;
+		this.c = 80;
+	}
+}

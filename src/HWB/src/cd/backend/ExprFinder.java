@@ -128,6 +128,8 @@ import cd.ir.Symbol.VariableSymbol;
 		
 		@Override
 		public Boolean thisRef(Ast.ThisRef ast, String arg) {
+			if(arg.equals("[this]"))
+				return true;
 			return false;
 		}
 		
