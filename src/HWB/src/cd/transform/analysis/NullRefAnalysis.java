@@ -8,6 +8,7 @@ import java.util.Set;
 import cd.ir.BasicBlock;
 import cd.ir.ControlFlowGraph;
 import cd.ir.Ast.*;
+import cd.ir.Symbol.ArrayTypeSymbol;
 import cd.ir.Symbol.ClassSymbol;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
 import cd.ir.Symbol.TypeSymbol;
@@ -99,6 +100,8 @@ public class NullRefAnalysis extends DataFlowAnalysis<Set<Definition>> {
 		for(VarDecl decl: md.decls().childrenOfType(VarDecl.class)) {
 			if(decl.sym.type instanceof ClassSymbol) {
 				defs.add(new Definition(new Assign(getLocalVar(decl.name, decl.sym.type), new NullConst())));
+			} else if(decl.sym.type instanceof ArrayTypeSymbol) {
+				defs.add(new Definition(new Assign(getLocalVar(decl.name, decl.sym.type), new NullConst())));
 			}
 		}
 		
@@ -115,7 +118,7 @@ public class NullRefAnalysis extends DataFlowAnalysis<Set<Definition>> {
 	}
 	
 	private Var getLocalVar(String name, TypeSymbol sym) {
-		return Var.withSym(new VariableSymbol(name, (ClassSymbol)sym, VariableSymbol.Kind.LOCAL));
+		return Var.withSym(new VariableSymbol(name, sym, VariableSymbol.Kind.LOCAL));
 	}
 	
 	private Var getParamVar(String name, TypeSymbol sym) {
