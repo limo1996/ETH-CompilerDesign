@@ -422,7 +422,7 @@ class AstCodeGeneratorRef extends AstCodeGenerator {
 		emit.emit("sub", constant(8), STACK_REG);
 		
 		emit.emit("and", -16, STACK_REG);
-		sg.gen(callMain, null);
+		sg.gen(callMain, new CodeContext());
 		emit.emit("movl", constant(ExitCode.OK.value), Register.EAX); // normal termination:
 		emit.emitMove(BASE_REG, STACK_REG);
 		emit.emit("pop", BASE_REG);

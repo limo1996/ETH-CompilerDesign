@@ -47,7 +47,6 @@ public class CfgCodeGenerator {
 		@Override
 		public Void methodDecl(MethodDecl ast, Void arg) {
 			cg.emitMethodPrefix(ast);
-			
 			ControlFlowGraph cfg = ast.cfg;
 			assert cfg != null;
 

@@ -3,12 +3,13 @@ import java.util.*;
 
 import cd.ir.Ast.Assign;
 import cd.ir.Ast.ClassDecl;
-import cd.ir.Ast.Expr;
+import cd.ir.Ast.*;
 import cd.ir.Ast.MethodDecl;
 import cd.ir.Ast.NullConst;
 import cd.ir.Ast.Stmt;
 import cd.ir.Ast.Var;
 import cd.ir.BasicBlock;
+import cd.ir.Symbol.VariableSymbol;
 import cd.transform.analysis.Definition;
 import cd.transform.analysis.NullRefAnalysis;
 import cd.transform.analysis.ReachingAnalysis;
@@ -32,6 +33,7 @@ public class CodeContext {
 	
 	public void setMethod(MethodDecl m_delc) {
 		this.m_decl = m_delc;
+		arrayToSize = new HashMap<String, Integer>();
 		null_an = new NullRefAnalysis(m_decl.cfg, m_decl);
 	}
 	
@@ -41,6 +43,10 @@ public class CodeContext {
 	
 	public void setStmtIndex(int i) {
 		index = i;
+	}
+	
+	public static boolean supported(Expr recv) {
+		return recv instanceof ThisRef || (recv instanceof Var && ((Var)recv).sym.kind == VariableSymbol.Kind.LOCAL);
 	}
 	
 	/** 
@@ -56,11 +62,15 @@ public class CodeContext {
 				ins.add(d.expr);
 			}
 		}
+		//System.out.println(var);
 		assert(ins.size() > 0);
-		if(ins.size() == 1)
-			reach = ins.get(0);
-		else 
-			reach = null;
+		reach = ins.get(0);
+		for(Expr e : ins) {
+			if(e instanceof NullConst) {
+				reach = null;
+				break;
+			}
+		}
 		
 		for(int it = i - 1; it >= 0; it--) {
 			Stmt st = bb.stmts.get(it);
@@ -81,8 +91,13 @@ public class CodeContext {
 		return reach;
 	}
 	
-	public boolean needsNullCheck(String var) {
-		Expr res = definition(var, _bb, null_an, index);
+	public boolean needsNullCheck(Expr e) {
+		if(!supported(e))
+			return true;
+		if(e instanceof ThisRef)
+			return false;
+		String name = ((Var)e).name;
+		Expr res = definition(name, _bb, null_an, index);
 		return res == null || res instanceof NullConst;
 	}
 	
@@ -95,4 +110,6 @@ public class CodeContext {
 			return arrayToSize.get(name);
 		return 0;
 	}
+	
+	public String left;
 }
