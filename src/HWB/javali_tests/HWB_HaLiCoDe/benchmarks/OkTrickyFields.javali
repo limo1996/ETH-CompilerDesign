@@ -1,0 +1,14 @@
+// Test everything
+class Main {
+   void main() {
+	AA aaa;
+	int i;
+	i = 0;
+	i = aaa.a + 9 - 8;	
+   }
+}
+
+class AA {
+	int a;
+}
+

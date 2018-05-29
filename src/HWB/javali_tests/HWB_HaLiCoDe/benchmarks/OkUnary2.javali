@@ -1,0 +1,21 @@
+/* Unary optimization, but "nontrivial" */
+class Main {
+	void main(){
+		int a, b;
+		// test constant
+		a = +(-(-(-(3))));
+		// test variable
+		b = -(-(-(-(+a))));
+		// test without parentheses
+		a = -3;
+		// test without assign
+		if(a == +(-(-(-(3))))){
+			// test with write
+			write((-(-(+(-7)))));
+		}
+		// test with function call
+		foo(+(-(-(-(3)))));
+	}
+	
+	void foo(int i){}
+}

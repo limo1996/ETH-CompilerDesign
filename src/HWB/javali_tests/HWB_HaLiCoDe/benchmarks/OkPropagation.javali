@@ -1,0 +1,59 @@
+class AAA {
+	int a;
+}
+
+class Main {
+	void main(){
+		int a, b, c, d;
+		a = read();
+		b = 10 * a + 9 * 10;
+		write(a);
+		a = 10;
+		c = b * a + 10;
+		b = 100;
+		write(b);
+		c = 100 * b;
+		write(c);
+		write(d);
+		a = 100;
+		b = 200 * a;
+		writeln();
+		c = 100 * 9 + getter(98 * 9 + 19 + b, a);
+		writeln();
+		write(a);
+		writeln();
+		write(b);
+		c = a * b;
+		write(c);
+	}
+
+	int getter(int a, int b) {
+		int[] aa;
+		int i;
+		AAA aaa;
+		aaa = new AAA();
+		aaa.a = 0;
+		aaa.a = 1;
+		i = 0;
+		aa = new int[a * b];
+		aa[i] = aaa.a;
+		i = 2;
+		aa[i] = 2;
+		a = 5 * 9 + aa[i] * b;
+		write(b);
+		b = a * 0;
+		write(b);
+		getter2();
+		return 9 * 8;
+	}
+
+	void getter2(){
+		int i, j;
+		j = 0;
+		while(j < 10) {
+			j = j + 1;
+			write(i);
+			i = 100;
+		}
+	}
+}

@@ -1,0 +1,22 @@
+class Main {
+	void main() {
+		int i0, i1, i2, i3, i4;
+		i0 = read();
+		i1 = read();
+		i2 = read();
+		i3 = read();
+		write(i0 / i1 * (i2 / i3)); writeln();		
+		i0 = read();
+		i1 = read();
+		i2 = read();
+		i3 = read();
+		write(i0 / i1 * (i2 / i3)); writeln();		
+		i0 = read();
+		i1 = read();
+		i2 = read();
+		i3 = read();
+		write((i0 / i1) * (i2 / i3) * (((i0 + i1) * (i2 + (-i3) * (+i2)) / (i0 + i3 + (-i2)) / (((((((i0 - i1) - i2) - i3) - i0) - i1) - i2) - i3)))); writeln();
+		i4 = 0;		
+		write(i4); writeln();		
+	}
+}

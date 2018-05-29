@@ -1,0 +1,49 @@
+// Test short-circuit evaluation of boolean operators
+
+class Main {
+	int a, b, c;
+	boolean d, e, f;
+
+	void main() {
+		a = 1;
+		b = a + 1;
+		c = a * b + 5;
+		d = true;
+		e = a < b;
+		f = d && e || c / b == a;
+		
+		if (e) {
+			overwriteFields(this);
+		} else {
+			overwriteFields(this);
+		}
+		
+		if(f) {
+			write(a); writeln();
+			write(b); writeln();
+			write(c); writeln();
+		} else {		
+			writeIf(d);
+			writeIf(d);
+			writeIf(f);
+		}
+	}
+	
+	void writeIf(boolean b) {
+		if (b) {
+			write(10); 
+		} else {
+			write(20);
+		}
+		writeln();
+	}
+	
+	void overwriteFields(Main main) {
+		main.a = 0;
+		main.b = 0;
+		main.c = 0;
+		main.d = false;
+		main.e = false;
+		main.f = false;
+	}
+}

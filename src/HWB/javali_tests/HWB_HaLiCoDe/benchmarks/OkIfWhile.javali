@@ -1,0 +1,22 @@
+class Main {
+	void main() {
+		int i1, i2, i3, i4;
+		i1 = 1;
+		i2 = 11;
+		i3 = 1111;
+		i4 = 1111111111;
+		while(i1 != i4) {
+			if(i1 == i2) {
+				i1 = i2 * 10 + 1;
+			} else {
+				if(i1 == i3) {
+					i1 = i3 * 10 + 1;
+				} else {
+					i1 = i1 * 10 + 1;
+				}
+			}
+		}
+		write(i1);
+		writeln();
+	}
+}

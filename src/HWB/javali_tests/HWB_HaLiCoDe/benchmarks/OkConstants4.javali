@@ -1,0 +1,13 @@
+class Main {
+	void main() {
+		int i1, i2, i3;
+		i1 = -(9 * 8 / 9 + 6 - 8 * 45 / 7);
+		i2 = (0*i1) +(9 * 6 - 2 + 98 / 34);
+		i3 = i2 + 0;
+		i3 = i2 - 0;
+		write(i1);
+		write(i2);
+		write(i3);
+	}
+}
+

@@ -1,0 +1,12 @@
+class Main {
+	void main() {
+		boolean i1, i2, i3;
+		i1 = (true && true && (false || false || true || (true && false)));
+		i2 = false && i1;
+		i3 = false || false || i2 || true;
+		if(i3) {
+			write(1);
+			write(3);
+		}
+	}
+}

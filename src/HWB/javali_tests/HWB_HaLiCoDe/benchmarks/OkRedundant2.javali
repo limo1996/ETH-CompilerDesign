@@ -1,0 +1,16 @@
+class Main {
+	void main(){
+		int a, b, c;
+		a = 8 * 90 - 200 / 45 * 6;
+		a = 2 + 3 * 5;
+		b = a * a - a + 9;
+		write(a);
+		c = a * b;
+		b = 6 + 2;
+		a = 78 * 90;
+		c = a * b - 8;
+		write(a);
+		write(c);
+		write(b);
+	}
+}
