@@ -10,6 +10,7 @@ import cd.Config;
 import cd.backend.codegen.RegisterManager.Register;
 import cd.ir.Ast;
 import cd.ir.Ast.Assign;
+import cd.ir.Ast.BooleanConst;
 import cd.ir.Ast.BuiltInWrite;
 import cd.ir.Ast.BuiltInWriteln;
 import cd.ir.Ast.ClassDecl;
@@ -17,6 +18,7 @@ import cd.ir.Ast.Expr;
 import cd.ir.Ast.Field;
 import cd.ir.Ast.IfElse;
 import cd.ir.Ast.Index;
+import cd.ir.Ast.IntConst;
 import cd.ir.Ast.MethodCall;
 import cd.ir.Ast.MethodDecl;
 import cd.ir.Ast.ReturnStmt;
@@ -101,24 +103,14 @@ class StmtGeneratorRef extends StmtGenerator {
 		cgRef.emit.emitComment("Load \"this\" pointer");
 		cgRef.emit.emitLoad((allArgs.size() - 1) * Config.SIZEOF_PTR, STACK_REG, reg);
 
-		Expr recv = allArgs.get(0);
-		assert recv != null;
-		if(!(recv instanceof ThisRef) && recv instanceof Var) {
-			Var recv2 = (Var)recv;
-			assert cc != null;
-			if((recv2.sym.kind == VariableSymbol.Kind.LOCAL && cc.needsNullCheck(recv2.name)) || recv2.sym.kind != VariableSymbol.Kind.LOCAL) {
-				// Check for a null receiver
-				int cnPadding = cgRef.emitCallPrefix(null, 1);
-				cgRef.push(reg.repr);
-				cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
-				cgRef.emitCallSuffix(null, 1, cnPadding);
-			}
-			else {
-				//System.out.println("Null check for: " + AstOneLine.toString(recv) + " saved");
-			}
-		}
-		else {
-			//System.out.println("Null check for: " + AstOneLine.toString(recv) + " saved");
+		assert cc != null;
+		if(cc.needsNullCheck(allArgs.get(0))) {
+			int cnPadding = cgRef.emitCallPrefix(null, 1);
+			cgRef.push(reg.repr);
+			cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
+			cgRef.emitCallSuffix(null, 1, cnPadding);
+		} else {
+			System.out.println("Null check for: " + AstOneLine.toString(allArgs.get(0)) + " saved");
 		}
 
 		// Load the address of the method to call into "reg"
@@ -165,7 +157,6 @@ class StmtGeneratorRef extends StmtGenerator {
 	public Register ifElse(IfElse ast, CodeContext arg) {
 		String falseLbl = cgRef.emit.uniqueLabel();
 		String doneLbl = cgRef.emit.uniqueLabel();
-
 		cgRef.genJumpIfFalse(ast.condition(), falseLbl, arg);
 		gen(ast.then(), arg);
 		cgRef.emit.emit("jmp", doneLbl);
@@ -180,7 +171,12 @@ class StmtGeneratorRef extends StmtGenerator {
 	public Register whileLoop(WhileLoop ast, CodeContext arg) {
 		String nextLbl = cgRef.emit.uniqueLabel();
 		String doneLbl = cgRef.emit.uniqueLabel();
-
+		System.out.println("While " + AstOneLine.toString(ast.condition()));
+		if(ast.condition() instanceof BooleanConst && ((BooleanConst)ast.condition()).value == false) {
+			System.out.println("While " + AstOneLine.toString(ast.condition()) + " removed");
+			return null;
+		}
+		
 		cgRef.emit.emitLabel(nextLbl);
 		cgRef.genJumpIfFalse(ast.condition(), doneLbl, arg);
 		gen(ast.body(), arg);
@@ -192,6 +188,7 @@ class StmtGeneratorRef extends StmtGenerator {
 
 	@Override
 	public Register assign(Assign ast, CodeContext arg) {
+		arg.left = AstOneLine.toString(ast.left());
 		class AssignVisitor extends ExprVisitor<Void, Expr> {
 
 			@Override
@@ -225,21 +222,38 @@ class StmtGeneratorRef extends StmtGenerator {
 				Pair<Register> regs = cgRef.egRef.genPushing(rhsReg, ast.left(), arg);
 				rhsReg = regs.a;
 				Register arrReg = regs.b;
-				int padding = cgRef.emitCallPrefix(null, 1);
-				cgRef.push(arrReg.repr);
-				cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
-				cgRef.emitCallSuffix(null, 1, padding);
+				
+				int padding;
+				if(arg.needsNullCheck(ast.left())) {
+					padding = cgRef.emitCallPrefix(null, 1);
+					cgRef.push(arrReg.repr);
+					cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
+					cgRef.emitCallSuffix(null, 1, padding);
+				} else {
+					System.out.println("Null check for: " + AstOneLine.toString(ast.left()) + " saved");
+				}
 				
 				regs = cgRef.egRef.genPushing(arrReg, ast.right(), arg);
 				arrReg = regs.a;
 				Register idxReg = regs.b;
 				
-				// Check array bounds
-				padding = cgRef.emitCallPrefix(null, 2);
-				cgRef.push(idxReg.repr);
-				cgRef.push(arrReg.repr);
-				cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_ARRAY_BOUNDS);
-				cgRef.emitCallSuffix(null, 2, padding);
+				int size = arg.getArrSize(AstOneLine.toString(ast.left()));
+				int index = -1;
+				if(ast.right() instanceof IntConst) {
+					index = ((IntConst)ast.right()).value;
+				}
+				
+				if(index < 0 || size <= 0 || index >= size) {
+					// Check array bounds
+					padding = cgRef.emitCallPrefix(null, 2);
+					cgRef.push(idxReg.repr);
+					cgRef.push(arrReg.repr);
+					cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_ARRAY_BOUNDS);
+					cgRef.emitCallSuffix(null, 2, padding);
+					System.out.println("Index " + AstOneLine.toString(ast) + " NOT ! check of bounds saved");
+				} else {
+					System.out.println("Index " + AstOneLine.toString(ast) + " check of bounds saved");
+				}
 				
 				cgRef.emit.emitMove(rhsReg, arrayAddress(arrReg, idxReg));
 				cgRef.rm.releaseRegister(arrReg);
@@ -284,7 +298,9 @@ class StmtGeneratorRef extends StmtGenerator {
 	public Register returnStmt(ReturnStmt ast, CodeContext arg) {
 		if (ast.arg() != null) {
 			Register reg = cgRef.eg.gen(ast.arg(), arg);
-			cgRef.emit.emitMove(reg, "%eax");
+			if(reg != Register.EAX)
+				cgRef.emit.emitMove(reg, "%eax");
+			
 			cgRef.emitMethodSuffix(false);
 			cgRef.rm.releaseRegister(reg);
 		} else {

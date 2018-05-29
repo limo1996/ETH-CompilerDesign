@@ -31,6 +31,7 @@ import cd.ir.Symbol.ArrayTypeSymbol;
 import cd.ir.Symbol.ClassSymbol;
 import cd.ir.Symbol.PrimitiveTypeSymbol;
 import cd.ir.Symbol.TypeSymbol;
+import cd.ir.Symbol.VariableSymbol;
 import cd.util.Pair;
 import cd.util.debug.AstOneLine;
 
@@ -142,7 +143,7 @@ class ExprGeneratorRef extends ExprGenerator {
 	public Register binaryOp(BinaryOp ast, CodeContext arg) {
 		Register leftReg = null;
 		Register rightReg = null;
-
+		
 		{
 
 			leftReg = gen(ast.left(), arg);
@@ -305,21 +306,39 @@ class ExprGeneratorRef extends ExprGenerator {
 	@Override
 	public Register index(Index ast, CodeContext arg) {
 		Register arr = gen(ast.left(), arg);
-		int padding = cgRef.emitCallPrefix(null, 1);
-		cgRef.push(arr.repr);
-		cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
-		cgRef.emitCallSuffix(null, 1, padding);
+		
+		int padding;
+		if(arg.needsNullCheck(ast.left())) {
+			padding = cgRef.emitCallPrefix(null, 1);
+			cgRef.push(arr.repr);
+			cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_NULL);
+			cgRef.emitCallSuffix(null, 1, padding);
+		} else {
+			System.out.println("Null check for: " + AstOneLine.toString(ast.left()) + " saved");
+		}
+		
 		Pair<Register> pair = genPushing(arr, ast.right(), arg);
 		arr = pair.a;
 		Register idx = pair.b;
 
-		// Check array bounds
-		padding = cgRef.emitCallPrefix(null, 2);
-		cgRef.push(idx.repr);
-		cgRef.push(arr.repr);
-		cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_ARRAY_BOUNDS);
-		cgRef.emitCallSuffix(null, 2, padding);
-
+		int size = arg.getArrSize(AstOneLine.toString(ast.left()));
+		int index = -1;
+		if(ast.right() instanceof IntConst) {
+			index = ((IntConst)ast.right()).value;
+		}
+		
+		if(index < 0 || size <= 0 || index >= size) {
+			// Check array bounds
+			padding = cgRef.emitCallPrefix(null, 2);
+			cgRef.push(idx.repr);
+			cgRef.push(arr.repr);
+			cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_ARRAY_BOUNDS);
+			cgRef.emitCallSuffix(null, 2, padding);
+			System.out.println("Index " + AstOneLine.toString(ast) + " NOT ! check of bounds saved");
+		} else {
+			System.out.println("Index " + AstOneLine.toString(ast) + " check of bounds saved");
+		}
+		
 		cgRef.emit.emitMove(AssemblyEmitter.arrayAddress(arr, idx), idx);
 		cgRef.rm.releaseRegister(arr);
 		return idx;
@@ -345,12 +364,23 @@ class ExprGeneratorRef extends ExprGenerator {
 		// result.
 		ArrayTypeSymbol arrsym = (ArrayTypeSymbol) ast.type;
 		Register reg = gen(ast.arg(), arg);
-
-		// Check for negative array sizes
-		int padding = cgRef.emitCallPrefix(null, 1);
-		cgRef.push(reg.repr);
-		cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_ARRAY_SIZE);
-		cgRef.emitCallSuffix(null, 1, padding);
+		
+		int size = 0;
+		if(ast.arg() instanceof IntConst) {
+			size = ((IntConst)ast.arg()).value;
+			arg.setArrSize(arg.left, size);
+		}
+		
+		if(size <= 0) {
+			// Check for negative array sizes
+			int padding = cgRef.emitCallPrefix(null, 1);
+			cgRef.push(reg.repr);
+			cgRef.emit.emit("call", AstCodeGeneratorRef.CHECK_ARRAY_SIZE);
+			cgRef.emitCallSuffix(null, 1, padding);
+			System.out.println("Array " + AstOneLine.toString(ast) + " NOT ! size check saved");
+		} else {
+			System.out.println("Array " + AstOneLine.toString(ast) + " size check saved");
+		}
 
 		Register lenReg = cgRef.rm.getRegister();
 		cgRef.emit.emit("movl", reg, lenReg); // save length
